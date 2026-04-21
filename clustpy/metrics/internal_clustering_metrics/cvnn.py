@@ -4,7 +4,9 @@ import numpy as np
 from clustpy.metrics._metrics_utils import _check_length_data_and_labels
 
 
-def cvnn_score(X: np.ndarray, labels: np.ndarray | int | tuple, n_neighbors: int = 5, metric: str = "euclidean") -> float | np.ndarray:
+def cvnn_score(
+    X: np.ndarray, labels: np.ndarray | int | tuple, n_neighbors: int = 5, metric: str = "euclidean"
+) -> float | np.ndarray:
     """
     Evaluate the quality of predicted labels by computing the clustering validation index based on nearest neighbors (CVNN).
     The score is calculated by adding a nearest-neighbor-based cluster separation value with a cluster compactness vale based on inner-cluster distances.
@@ -35,10 +37,14 @@ def cvnn_score(X: np.ndarray, labels: np.ndarray | int | tuple, n_neighbors: int
     -------
     Liu, Yanchi, et al. "Understanding and enhancement of internal clustering validation measures."
     IEEE transactions on cybernetics 43.3 (2013): 982-994.
+    Link: https://ieeexplore.ieee.org/document/6341117
     """
-    def _internal_cvnn_score(X: np.ndarray, labels: np.ndarray, nrbs_indices: np.ndarray, metric: str) -> (float, float):
+
+    def _internal_cvnn_score(
+        X: np.ndarray, labels: np.ndarray, nrbs_indices: np.ndarray, metric: str
+    ) -> (float, float):
         """
-        The real calculation method of the CVNN score. 
+        The real calculation method of the CVNN score.
 
         Parameters
         ----------
@@ -57,7 +63,9 @@ def cvnn_score(X: np.ndarray, labels: np.ndarray | int | tuple, n_neighbors: int
             The cluster spearation and cluster compactness value
         """
         X, labels = _check_length_data_and_labels(X, labels)
-        assert isinstance(labels, np.ndarray), "labels must be of type np.nddary. Your input has type {0}".format(type(labels))
+        assert isinstance(labels, np.ndarray), "labels must be of type np.ndarray. Your input has type {0}".format(
+            type(labels)
+        )
         unique_clusters = np.unique(labels)
         # Calculate neighbor weights
         n_neighbors = nrbs_indices.shape[1]
@@ -66,7 +74,7 @@ def cvnn_score(X: np.ndarray, labels: np.ndarray | int | tuple, n_neighbors: int
         cluster_compactness_scores = np.zeros(unique_clusters.shape[0])
         # Do per-cluster calculations
         for i, c in enumerate(unique_clusters):
-            in_cluster = (labels == c)
+            in_cluster = labels == c
             # Calculate separation (mean of neighbor weights in cluster)
             cluster_separation_scores[i] = n_neighbors_not_in_cluster[in_cluster].mean()
             # Calculate compartness (mean of pair-wise distances in cluster)
@@ -80,7 +88,7 @@ def cvnn_score(X: np.ndarray, labels: np.ndarray | int | tuple, n_neighbors: int
         cluster_separation_final = cluster_separation_scores.max()
         cluster_compactness_final = cluster_compactness_scores.sum()
         return cluster_separation_final, cluster_compactness_final
-    
+
     # Compute nearest neighbors
     nbrs = NearestNeighbors(n_neighbors=n_neighbors, metric=metric).fit(X)
     _, nrbs_indices = nbrs.kneighbors()
@@ -106,5 +114,9 @@ def cvnn_score(X: np.ndarray, labels: np.ndarray | int | tuple, n_neighbors: int
         cluster_separation, cluster_compactness = _internal_cvnn_score(X, labels, nrbs_indices, metric)
         cvnn = cluster_separation + cluster_compactness
     else:
-        raise ValueError("The labels must be of type list/tuple (indicating a list of different labels) or np.ndarray (indicating a single labels array). Your input is {0}".format(type(labels)))
+        raise ValueError(
+            "The labels must be of type list/tuple (indicating a list of different labels) or np.ndarray (indicating a single labels array). Your input is {0}".format(
+                type(labels)
+            )
+        )
     return cvnn
