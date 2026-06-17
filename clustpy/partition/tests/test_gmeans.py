@@ -16,7 +16,7 @@ def test_anderson_darling_statistic_to_prob():
     assert np.isclose(_anderson_darling_statistic_to_prob(statistic, n_points), 0.270, atol=0.001)
     # Example from https://www.spcforexcel.com/knowledge/basic-statistics/anderson-darling-test-for-normality
     data = np.array([3334, 3554, 3625, 3837, 3838])
-    ad_result = anderson(data, "norm")
+    ad_result = anderson(data, "norm", method="interpolate")
     statistic = ad_result.statistic
     assert np.isclose(statistic, 0.288, atol=0.001)
     assert np.isclose(_anderson_darling_statistic_to_prob(statistic, data.shape[0]), 0.456, atol=0.001)

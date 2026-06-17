@@ -49,6 +49,8 @@ def _gmeans(X: np.ndarray, significance: float, n_clusters_init: int, max_n_clus
     assert max_n_clusters >= n_clusters_init, "max_n_clusters can not be smaller than n_clusters_init"
     assert significance >= 0 and significance <= 1, "significance must be a value in the range [0, 1]"
     # Initialize parameters
+    if pval_strategy == "bootstrap":
+        ad_simulation = _anderson_bootstraps(X.shape[0], n_boots, random_state)
     n_clusters, labels, centers, _ = _initial_kmeans_clusters(X, n_clusters_init, random_state)
     while n_clusters < max_n_clusters:
         n_clusters_old = n_clusters
@@ -64,15 +66,14 @@ def _gmeans(X: np.ndarray, significance: float, n_clusters_init: int, max_n_clus
             projection_vector = centers_split[0] - centers_split[1]
             projection_vector /= np.linalg.norm(projection_vector)
             projected_data = np.dot(X[ids_in_cluster], projection_vector)
-            # Use Anderson Darling to test if data is Gaussian
+            # Use Anderson Darling to test if data is Gaussian (method includes standardization)
             ad_result = anderson(projected_data, "norm", method="interpolate")
             if pval_strategy == "interpolate":
                 p_value = ad_result.pvalue
             elif pval_strategy == "equation":
-                p_value = _anderson_darling_statistic_to_prob(ad_result.statistic, len(ids_in_cluster))
+                p_value = _anderson_darling_statistic_to_prob(ad_result.statistic, cluster_size)
             else:
-                ad_statistic = _gmeans_ad_statistic(cluster_size, ad_result.statistic)
-                ad_simulation = _anderson_bootstraps(cluster_size, n_boots, random_state)
+                ad_statistic = _gmeans_ad_statistic(ad_result.statistic, cluster_size)
                 # larger statistic -> less normal
                 count_ge = np.sum(ad_simulation >= ad_statistic)
                 p_value = count_ge / n_boots
@@ -97,7 +98,7 @@ def _gmeans(X: np.ndarray, significance: float, n_clusters_init: int, max_n_clus
     return n_clusters, labels, centers
 
 
-def _anderson_darling_statistic_to_prob(statistic: float, n_points: int) -> float:
+def _anderson_darling_statistic_to_prob(statistic: float, n_samples: int) -> float:
     """
     Transform the statistic returned by the Anderson Darling test into a p_value.
     First the adjusted statistic will be calculated.
@@ -107,8 +108,8 @@ def _anderson_darling_statistic_to_prob(statistic: float, n_points: int) -> floa
     ----------
     statistic : float
         The original statistic from the Anderson Darling test.
-    n_points : int
-        The number of samples
+    n_samples : int
+        the number of samples
 
     Returns
     -------
@@ -120,7 +121,7 @@ def _anderson_darling_statistic_to_prob(statistic: float, n_points: int) -> floa
     D'Agostino, Ralph B., and Michael A. Stephens. "Goodness-of-fit techniques."
     Statistics: Textbooks and Monographs (1986).
     """
-    adjusted_stat = statistic * (1 + (.75 / n_points) + 2.25 / (n_points ** 2))
+    adjusted_stat = statistic * (1 + (.75 / n_samples) + 2.25 / (n_samples ** 2))
     if adjusted_stat < 0.2:
         # is log q => therefore add 1 - ...
         p_value = 1 - np.exp(-13.436 + 101.14 * adjusted_stat - 223.73 * (adjusted_stat ** 2))
@@ -134,24 +135,24 @@ def _anderson_darling_statistic_to_prob(statistic: float, n_points: int) -> floa
     return p_value
 
 
-def _gmeans_ad_statistic(n_samples: int, ad_result: float) -> float:
+def _gmeans_ad_statistic(statistic: float, n_samples: int) -> float:
     """
     Adjust the ad statistic as described in the GMeans paper.
 
     Parameters
     ----------
+    statistic : float
+        The original statistic from the Anderson Darling test.
     n_samples : int
         the number of samples
-    ad_result : float
-        the original anderson-darling statistic
 
     Returns
     -------
-    ad_result : float
+    adjusted_stat : float
         the adjusted ad statistic
     """
-    ad_result = ad_result * (1 + 4/n_samples - 25/(n_samples**2))
-    return ad_result
+    adjusted_stat = statistic * (1 + 4/n_samples - 25/(n_samples**2))
+    return adjusted_stat
 
 
 def _anderson_bootstraps(n_samples: int, n_boots: int, random_state: np.random.RandomState) -> list[float]:
@@ -174,7 +175,7 @@ def _anderson_bootstraps(n_samples: int, n_boots: int, random_state: np.random.R
     """
     samples = random_state.normal(size=(n_boots, n_samples))
     simulation_ads = [anderson(samples[i], "norm", method="interpolate").statistic for i in range(n_boots)]
-    gmeans_ads = [_gmeans_ad_statistic(n_samples, ad2) for ad2 in simulation_ads]
+    gmeans_ads = [_gmeans_ad_statistic(ad, n_samples) for ad in simulation_ads]
     return gmeans_ads
 
 

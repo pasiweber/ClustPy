@@ -324,7 +324,7 @@ def _get_within_cluster_dispersion(X: np.ndarray, labels : np.ndarray, centers :
                                    inertia : float | None, use_log: bool, weighted: bool) -> float:
     """
     Get the within cluster disperion (inertia).
-    Calculated as \sum_k \sum_{x \in C_k} |x-\mu_k|^2 = \sum_k 1/(2|C_k|) \sum_{x,z \in C_k} |x-z|^2
+    Calculated as sum_k sum_{x in C_k} |x-mu_k|^2 = sum_k 1/(2|C_k|) sum_{x,z in C_k} |x-z|^2
 
     Parameters
     ----------
