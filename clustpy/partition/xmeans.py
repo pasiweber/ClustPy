@@ -336,7 +336,8 @@ def _clustering_score(n_points: int, cluster_sizes: np.ndarray, n_dims: int, ine
     inertia : float
         The inertia of the clustering result
     split_criterion : str
-        The split criterion. Can be "original", "corrected", or "aic"
+        The split criterion. Can be "bic-original" (BIC), "bic-corrected" (corrected BIC),
+        "aic-original" (AIC), or "aic-corrected" (corrected AIC)
 
     Returns
     -------

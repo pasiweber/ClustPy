@@ -134,7 +134,7 @@ def _gap_statistic_clusterer(X: np.ndarray, min_n_clusters: int, max_n_clusters:
         - "original": Abort the process when a result with Gap[k-1] >= Gap[k] - sks[k] is identified
         - "original-all": Returns the same result as original, but calculates all Gaps until max_n_clusters
         - "max": Returns the maximum gap identified
-        - "ddgap": Returns the maximum DDGap value, defined as Gap(k) - Gap(k-1) - Gap(k+1) 
+        - "ddgap": Returns the maximum DDGap value, defined as 2 * Gap[k] - Gap[k-1] - Gap[k+1]
         (see Yan and Ye "Determining the Number of Clusters Using the Weighted Gap Statistic.")
     use_log : bool
         True, if the logarithm of the within cluster dispersion should be used.
@@ -385,7 +385,7 @@ class GapStatistic(ClusterMixin, BaseEstimator):
         - "original": Abort the process when a result with Gap[k-1] >= Gap[k] - sks[k] is identified
         - "original-all": Returns the same result as original, but calculates all Gaps until max_n_clusters
         - "max": Returns the maximum gap identified
-        - "ddgap": Returns the maximum DDGap value, defined as Gap(k) - Gap(k-1) - Gap(k+1) 
+        - "ddgap": Returns the maximum DDGap value, defined as 2 * Gap[k] - Gap[k-1] - Gap[k+1]
         (see Yan and Ye "Determining the Number of Clusters Using the Weighted Gap Statistic.") (default: original)
     use_log : bool
         True, if the logarithm of the within cluster dispersion should be used.
