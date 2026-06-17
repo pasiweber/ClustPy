@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise import pairwise_distances_argmin_min
 
 
 def _gmeans(X: np.ndarray, significance: float, n_clusters_init: int, max_n_clusters: int, n_split_trials: int,
-            random_state: np.random.RandomState) -> (int, np.ndarray, np.ndarray):
+            pval_strategy: str, n_boots: int, random_state: np.random.RandomState) -> (int, np.ndarray, np.ndarray):
     """
     Start the actual GMeans clustering procedure on the input data set.
 
@@ -30,6 +30,12 @@ def _gmeans(X: np.ndarray, significance: float, n_clusters_init: int, max_n_clus
         Maximum number of clusters. Must be larger than n_clusters_init
     n_split_trials : int
         Number tries to split a cluster. For each try 2-KMeans is executed with different cluster centers
+    pval_strategy: str
+        Strategy to calculate the p-value. 
+        Can be 'equation' (using piecewise curve-fitting regression equations), 'bootstrap' (as described in the paper, 
+        including monte-carlo simulation) or 'interpolate' (interpolation strategy from scipy)
+    n_boots : int
+        Number of bootstraps used to calculate the p-values. Only necessary if pval_strategy is 'original'
     random_state : np.random.RandomState
         use a fixed random state to get a repeatable solution
 
@@ -48,19 +54,28 @@ def _gmeans(X: np.ndarray, significance: float, n_clusters_init: int, max_n_clus
         n_clusters_old = n_clusters
         for c in range(n_clusters_old):
             ids_in_cluster = np.where(labels == c)[0]
-            if ids_in_cluster.shape[0] < 2:
+            cluster_size = ids_in_cluster.shape[0]
+            if cluster_size < 2:
                 continue
             # Split cluster into two
-            labels_split, centers_split, _ = _execute_two_means(X[ids_in_cluster], [np.arange(ids_in_cluster.shape[0])], 0,
+            labels_split, centers_split, _ = _execute_two_means(X[ids_in_cluster], [np.arange(cluster_size)], 0,
                                                              np.array([centers[c]]), n_split_trials, random_state)
             # Project data form cluster onto resulting connection axis
             projection_vector = centers_split[0] - centers_split[1]
             projection_vector /= np.linalg.norm(projection_vector)
             projected_data = np.dot(X[ids_in_cluster], projection_vector)
-            projected_data = (projected_data - projected_data.mean()) / projected_data.std()
             # Use Anderson Darling to test if data is Gaussian
             ad_result = anderson(projected_data, "norm", method="interpolate")
-            p_value = ad_result.pvalue
+            if pval_strategy == "interpolate":
+                p_value = ad_result.pvalue
+            elif pval_strategy == "equation":
+                p_value = _anderson_darling_statistic_to_prob(ad_result.statistic, len(ids_in_cluster))
+            else:
+                ad_statistic = _gmeans_ad_statistic(cluster_size, ad_result.statistic)
+                ad_simulation = _anderson_bootstraps(cluster_size, n_boots, random_state)
+                # larger statistic -> less normal
+                count_ge = np.sum(ad_simulation >= ad_statistic)
+                p_value = count_ge / n_boots
             if p_value < significance:
                 # If data is not Gaussian, keep the newly created cluster centers
                 centers[c] = centers_split[0]
@@ -82,6 +97,87 @@ def _gmeans(X: np.ndarray, significance: float, n_clusters_init: int, max_n_clus
     return n_clusters, labels, centers
 
 
+def _anderson_darling_statistic_to_prob(statistic: float, n_points: int) -> float:
+    """
+    Transform the statistic returned by the Anderson Darling test into a p_value.
+    First the adjusted statistic will be calculated.
+    Afterwards, the actual p-value can be obtained.
+
+    Parameters
+    ----------
+    statistic : float
+        The original statistic from the Anderson Darling test.
+    n_points : int
+        The number of samples
+
+    Returns
+    -------
+    p_value : float
+        The p-value
+
+    References
+    ----------
+    D'Agostino, Ralph B., and Michael A. Stephens. "Goodness-of-fit techniques."
+    Statistics: Textbooks and Monographs (1986).
+    """
+    adjusted_stat = statistic * (1 + (.75 / n_points) + 2.25 / (n_points ** 2))
+    if adjusted_stat < 0.2:
+        # is log q => therefore add 1 - ...
+        p_value = 1 - np.exp(-13.436 + 101.14 * adjusted_stat - 223.73 * (adjusted_stat ** 2))
+    elif adjusted_stat < 0.34:
+        # is log q => therefore add 1 - ...
+        p_value = 1 - np.exp(-8.318 + 42.796 * adjusted_stat - 59.938 * (adjusted_stat ** 2))
+    elif adjusted_stat < 0.6:
+        p_value = np.exp(0.9177 - 4.279 * adjusted_stat - 1.38 * (adjusted_stat ** 2))
+    else:
+        p_value = np.exp(1.2937 - 5.709 * adjusted_stat - 0.0186 * (adjusted_stat ** 2))
+    return p_value
+
+
+def _gmeans_ad_statistic(n_samples: int, ad_result: float) -> float:
+    """
+    Adjust the ad statistic as described in the GMeans paper.
+
+    Parameters
+    ----------
+    n_samples : int
+        the number of samples
+    ad_result : float
+        the original anderson-darling statistic
+
+    Returns
+    -------
+    ad_result : float
+        the adjusted ad statistic
+    """
+    ad_result = ad_result * (1 + 4/n_samples - 25/(n_samples**2))
+    return ad_result
+
+
+def _anderson_bootstraps(n_samples: int, n_boots: int, random_state: np.random.RandomState) -> list[float]:
+    """
+    Adjust the ad statistic as described in the GMeans paper.
+
+    Parameters
+    ----------
+    n_samples : int
+        the number of samples
+    n_boots : int
+        the number of bootstraps
+    random_state : np.random.RandomState
+        use a fixed random state to get a repeatable solution
+
+    Returns
+    -------
+    gmeans_ads : list[float]
+        the bootstraped ad statistic
+    """
+    samples = random_state.normal(size=(n_boots, n_samples))
+    simulation_ads = [anderson(samples[i], "norm", method="interpolate").statistic for i in range(n_boots)]
+    gmeans_ads = [_gmeans_ad_statistic(n_samples, ad2) for ad2 in simulation_ads]
+    return gmeans_ads
+
+
 class GMeans(ClusterMixin, BaseEstimator):
     """
     Execute the GMeans clustering procedure.
@@ -100,6 +196,12 @@ class GMeans(ClusterMixin, BaseEstimator):
         Maximum number of clusters. Must be larger than n_clusters_init (default: np.inf)
     n_split_trials : int
         Number tries to split a cluster. For each try 2-KMeans is executed with different cluster centers (default: 10)
+    pval_strategy: str
+        Strategy to calculate the p-value. 
+        Can be 'equation' (using piecewise curve-fitting regression equations), 'bootstrap' (as described in the paper, 
+        including monte-carlo simulation) or 'interpolate' (interpolation strategy from scipy) (default: 'equation')
+    n_boots : int
+        Number of bootstraps used to calculate the p-values. Only necessary if pval_strategy is 'original' (default: 1000)
     random_state : np.random.RandomState | int
         use a fixed random state to get a repeatable solution. Can also be of type int (default: None)
 
@@ -126,11 +228,14 @@ class GMeans(ClusterMixin, BaseEstimator):
     """
 
     def __init__(self, significance: float = 0.0001, n_clusters_init: int = 1, max_n_clusters: int = np.inf,
-                 n_split_trials: int = 10, random_state: np.random.RandomState | int = None):
+                 n_split_trials: int = 10, pval_strategy: str = "equation", n_boots: int = 1000,
+                 random_state: np.random.RandomState | int = None):
         self.significance = significance
         self.n_clusters_init = n_clusters_init
         self.max_n_clusters = max_n_clusters
         self.n_split_trials = n_split_trials
+        self.pval_strategy = pval_strategy
+        self.n_boots = n_boots
         self.random_state = random_state
 
     def fit(self, X: np.ndarray, y: np.ndarray = None) -> 'GMeans':
@@ -151,8 +256,10 @@ class GMeans(ClusterMixin, BaseEstimator):
             this instance of the GMeans algorithm
         """
         X, _, random_state = check_parameters(X=X, y=y, random_state=self.random_state)
+        pval_strategy = self.pval_strategy.lower()
+        assert pval_strategy in ["equation", "bootstrap", "interpolate"]
         n_clusters, labels, centers = _gmeans(X, self.significance, self.n_clusters_init, self.max_n_clusters,
-                                              self.n_split_trials, random_state)
+                                              self.n_split_trials, pval_strategy, self.n_boots, random_state)
         self.n_clusters_ = n_clusters
         self.labels_ = labels
         self.cluster_centers_ = centers

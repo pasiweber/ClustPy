@@ -67,10 +67,9 @@ def test_merge_clusters():
     centers = np.array([[1., 0.], [4., 0.]])
     ids_in_each_cluster = [np.array([i for i in range(9)]), np.array([i for i in range(9, 18)])]
     cluster_sizes = np.array([9, 9])
-    cluster_variances = np.array([np.sum((X[ids_in_each_cluster[c]] - centers[c]) ** 2) / (
-            cluster_sizes[c] - 1) for c in range(n_clusters)])
+    cluster_inertias = np.array([np.sum((X[ids_in_each_cluster[c]] - centers[c]) ** 2) for c in range(n_clusters)])
     n_clusters, labels, centers = _merge_clusters(X, n_clusters, labels, centers, ids_in_each_cluster, cluster_sizes,
-                                                  cluster_variances, "bic-corrected")
+                                                  cluster_inertias, "bic-corrected")
     assert n_clusters == 1
     assert np.array_equal(labels, np.array([0] * 18))
     assert np.array_equal(centers, np.array([[2.5, 0]]))
@@ -83,7 +82,7 @@ Tests regarding the XMeans object
 
 def test_simple_XMeans():
     X, labels = make_blobs(200, 4, centers=3, random_state=1)
-    xmeans = XMeans(random_state=1)
+    xmeans = XMeans(random_state=1, split_criterion="bic-corrected")
     assert not hasattr(xmeans, "labels_")
     xmeans.fit(X)
     assert xmeans.labels_.dtype == np.int32

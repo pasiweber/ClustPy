@@ -50,7 +50,7 @@ def _check_labels_arrays(labels_true: np.ndarray, labels_pred: np.ndarray, allow
     return labels_true, labels_pred
 
 
-def _check_length_data_and_labels(X: np.ndarray, labels: np.ndarray) -> (np.ndarray, np.ndarray):
+def _check_length_data_and_labels(X: np.ndarray, labels: np.ndarray, allow_single_cluster: bool = False) -> (np.ndarray, np.ndarray):
     """
     Check that the data and the prediction labels are compatible.
     If they do not match throw an exception.
@@ -61,6 +61,8 @@ def _check_length_data_and_labels(X: np.ndarray, labels: np.ndarray) -> (np.ndar
         The data set
     labels : np.ndarray
         The labels as predicted by a clustering algorithm
+    allow_single_cluster : bool
+        Allow a single cluster within the labels (default: False)
 
      Returns
     -------
@@ -71,6 +73,6 @@ def _check_length_data_and_labels(X: np.ndarray, labels: np.ndarray) -> (np.ndar
     X, labels = check_X_y(X, labels)
     labels = labels.astype(int)
     n_pred_clusters = len(np.unique(labels))
-    if n_pred_clusters == 1 or n_pred_clusters == X.shape[0]:
+    if (not allow_single_cluster and n_pred_clusters == 1) or n_pred_clusters == X.shape[0]:
         raise ValueError("The number of different labels must be within [2, n_samples -1]")
     return X, labels
