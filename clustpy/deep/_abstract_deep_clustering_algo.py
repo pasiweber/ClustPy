@@ -6,6 +6,7 @@ from clustpy.deep._data_utils import augmentation_invariance_check
 from clustpy.utils.checks import check_parameters
 from sklearn.utils.validation import check_is_fitted
 from sklearn.metrics.pairwise import pairwise_distances_argmin_min
+from pathlib import Path
 
 
 class _AbstractDeepClusteringAlgo(TransformerMixin, ClusterMixin, BaseEstimator):
@@ -19,7 +20,7 @@ class _AbstractDeepClusteringAlgo(TransformerMixin, ClusterMixin, BaseEstimator)
     neural_network : torch.nn.Module | tuple
         the neural network used for the computations.
         Can also be a tuple consisting of the neural network class (torch.nn.Module) and the initialization parameters (dict).
-    neural_network_weights : str
+    neural_network_weights : str | Path
         Path to a file containing the state_dict of the neural_network.
     embedding_size : int
         size of the embedding within the autoencoder
@@ -29,7 +30,7 @@ class _AbstractDeepClusteringAlgo(TransformerMixin, ClusterMixin, BaseEstimator)
         use a fixed random state to get a repeatable solution. Can also be of type int
     """
 
-    def __init__(self, batch_size: int, neural_network: torch.nn.Module | tuple, neural_network_weights: str,
+    def __init__(self, batch_size: int, neural_network: torch.nn.Module | tuple, neural_network_weights: str | Path,
                  embedding_size: int, device: torch.device, random_state: np.random.RandomState | int):
         self.batch_size = batch_size
         self.neural_network = neural_network
@@ -100,11 +101,6 @@ class _AbstractDeepClusteringAlgo(TransformerMixin, ClusterMixin, BaseEstimator)
         """
         check_is_fitted(self, ["labels_", "neural_network_trained_", "n_features_in_"])
         X, _, _ = check_parameters(X, allow_size_1=True, allow_nd=self.neural_network_trained_.allow_nd_input, estimator_obj=self)
-        if X.shape[1] != self.n_features_in_:
-            raise ValueError(
-            f"X has {X.shape[1]} features, but {self.__class__.__name__} "
-            f"is expecting {self.n_features_in_} features as input."
-        )
         X_embed = self.neural_network_trained_.transform(X)
         return X_embed
 
