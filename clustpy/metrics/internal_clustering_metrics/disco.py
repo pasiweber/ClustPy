@@ -1,26 +1,18 @@
-"""Evaluation metric DISCO."""
-
-# Implementation of DISCO by
-# - Author: us
-# - Source: this git
-# - License: -
-
-# Paper: submitted with this code
-# Authors: anonymous authors
-# Link: comming soon
-
+"""
+@authors:
+Pascal Weber
+"""
 
 from __future__ import annotations
-
 import numpy as np
 from sklearn.metrics import silhouette_samples
 from sklearn.neighbors import KDTree
-
+from sklearn.preprocessing import LabelEncoder
 from clustpy.utils.dctree import DCTree
-# from SHiP import SHiP
+from clustpy.metrics._metrics_utils import handle_noise
 
 
-def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> float:
+def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5, noise_strategy: str = "keep") -> float:
     """Compute the mean DISCO score of all samples.
 
     The DISCO score is a measure of how well samples are clustered
@@ -53,34 +45,29 @@ def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> float
     overlapping clusters. Negative values generally indicate that a sample has
     been assigned to the wrong cluster, as a different cluster is more similar.
 
-    Read more in the :ref:`User Guide <disco_score>`.
-
-
     Parameters
     ----------
     X : {array-like, sparse matrix} of (n_samples_a, n_features)
         A feature array.
-
     labels : array-like of shape (n_samples,)
         Predicted labels for each sample.
-
     min_points : int
         ``min_points`` value to use for the dc-distance.
-
+    noise_strategy : str
+        Strategy for handling noise. Must be one of:
+        - "keep"               : Keep all noise points as they are (default).
+        - "as_one_cluster"     : Assign all noise points to a single new cluster.
+        - "as_singletons"      : Assign each noise point to its own cluster.
+        - "filter"             : Remove all noise points.
+        - "to_nearest_cluster" : Assign each noise point to nearest cluster.
 
     Returns
     -------
     disco_score : float
         Mean DISCO score for all samples.
 
-
-    References
-    ----------
-    .. [1] `anonymous`_
-
-
-    Examples
-    --------
+    Example
+    -------
     >>> from disco import disco_score
     >>> from sklearn.datasets import make_moons
     >>> from sklearn.cluster import HDBSCAN
@@ -88,13 +75,18 @@ def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> float
     >>> hdbscan = HDBSCAN()
     >>> labels = hdbscan.fit_predict(X).labels_
     >>> disco_score(X, labels)
-    0.71...
 
+    References
+    ----------
+    Internal Evaluation of Density-Based Clusterings with Noise
+    Anna Beer, Lena Krieger, Pascal Weber, Martin Ritzert, Ira Assent, Claudia Plant
+    International Conference on Learning Representations (ICLR), Rio de Janeiro, Brazil, 2026.
     """
-    return np.mean(disco_samples(X, labels, min_points))
+
+    return np.mean(disco_samples(X, labels, min_points, noise_strategy=noise_strategy))
 
 
-def disco_samples(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> np.ndarray:
+def disco_samples(X: np.ndarray, labels: np.ndarray, min_points: int = 5, noise_strategy: str = "keep") -> np.ndarray:
     """Compute the DISCO score for each sample.
 
     The DISCO score is a measure of how well samples are clustered
@@ -126,33 +118,29 @@ def disco_samples(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> np.
     overlapping clusters. Negative values generally indicate that a sample has
     been assigned to the wrong cluster, as a different cluster is more similar.
 
-    Read more in the :ref:`User Guide <disco_score>`.
-
     Parameters
     ----------
     X : {array-like, sparse matrix} of (n_samples_a, n_features)
         A feature array.
-
     labels : array-like of shape (n_samples,)
         Label values for each sample.
-
     min_points : int
         ``min_points`` value to use for the dc-distance.
-
+    noise_strategy : str
+        Strategy for handling noise. Must be one of:
+        - "keep"               : Keep all noise points as they are (default).
+        - "as_one_cluster"     : Assign all noise points to a single new cluster.
+        - "as_singletons"      : Assign each noise point to its own cluster.
+        - "filter"             : Remove all noise points.
+        - "to_nearest_cluster" : Assign each noise point to nearest cluster.
 
     Returns
     -------
     disco_score : array-like of shape (n_samples,)
         DISCO scores for each sample.
 
-    References
-    ----------
-
-    .. [1] `anonymous`_
-
-
-    Examples
-    --------
+    Example
+    -------
     >>> from disco import disco_score
     >>> from sklearn.datasets import make_moons
     >>> from sklearn.cluster import HDBSCAN
@@ -160,13 +148,21 @@ def disco_samples(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> np.
     >>> hdbscan = HDBSCAN()
     >>> labels = hdbscan.fit_predict(X).labels_
     >>> disco_samples(X, labels)
-    array([...])
 
+    References
+    ----------
+    Internal Evaluation of Density-Based Clusterings with Noise
+    Anna Beer, Lena Krieger, Pascal Weber, Martin Ritzert, Ira Assent, Claudia Plant
+    International Conference on Learning Representations (ICLR), Rio de Janeiro, Brazil, 2026.
     """
+
     if len(X) == 0:
         raise ValueError("Can't calculate DISCO score for empty dataset.")
     if len(X) != len(labels):
         raise ValueError("Dataset size differs from label size.")
+
+    labels, X = handle_noise(labels, strategy=noise_strategy, X=X)
+    labels[labels != -1] = LabelEncoder().fit_transform(labels[labels != -1])
 
     # Labels needs to be a one dimensional vector
     labels = np.reshape(labels, -1)
@@ -222,32 +218,25 @@ def p_cluster(
     overlapping clusters. Negative values generally indicate that a sample has
     been assigned to the wrong cluster, as a different cluster is more similar.
 
-    Read more in the :ref:`User Guide <silhouette_coefficient>`.
-
-
     Parameters
     ----------
     X : {array-like, sparse matrix} of (n_samples_a, n_features)
         A feature array.
-
     labels : array-like of shape (n_samples,)
         Predicted labels for each sample.
-
     min_points : int
         ``min_points`` value to use for the dc-distance.
-
     precomputed_dc_dists : bool
         Use X as dc-distance matrix if True, else calculate dc-distance for data ``X``.
-
+        
 
     Returns
     -------
     p_cluster : array-like of shape (n_samples,)
         p_cluster scores for each sample.
 
-
-    Examples
-    --------
+    Example
+    -------
     >>> from disco import p_cluster
     >>> from sklearn.datasets import make_moons
     >>> from sklearn.cluster import HDBSCAN
@@ -255,8 +244,6 @@ def p_cluster(
     >>> hdbscan = HDBSCAN()
     >>> labels = hdbscan.fit_predict(X).labels_
     >>> p_cluster(X, labels)
-    array([...])
-
     """
     if len(X) != len(labels):
         raise ValueError("Dataset size of `X` differs from label size of `lables`.")
@@ -307,30 +294,24 @@ def p_noise(
     an existing cluster. Negative values generally indicate that a noise sample lays within
     an existing cluster.
 
-
     Parameters
     ----------
     X : {array-like, sparse matrix} of (n_samples_a, n_features)
         A feature array.
-
     labels : array-like of shape (n_samples,)
         Predicted labels for each sample.
-
     min_points : int
         ``min_points`` value to use for the dc-distance.
-
     dc_dists : array-like of shape (n_samples,)
         Precalculated dc-distances. If not provided, dc-distances will be calculated for data ``X``.
-
 
     Returns
     -------
     (p_sparse, p_far) : tuple of two array-like, both of shape (n_noise,)
         (p_sparse, p_far) for each sample, returned in two seperate arrays.
 
-
-    Examples
-    --------
+    Example
+    -------
     >>> from disco import p_noise
     >>> from sklearn.datasets import make_moons
     >>> from sklearn.cluster import HDBSCAN
@@ -338,8 +319,6 @@ def p_noise(
     >>> hdbscan = HDBSCAN()
     >>> labels = hdbscan.fit_predict(X).labels_
     >>> p_noise(X, labels)
-    (array([...]), array([...]))
-
     """
     if len(X) == 0:
         raise ValueError("Can't calculate noise score for empty dataset.")
@@ -401,5 +380,5 @@ def p_noise(
 
 
 def dc_distances(X, min_points=5):
-    dc_dists = DCTree(X, min_points=min_points, no_fastindex=True).dc_distances()
+    dc_dists = DCTree(X, min_points=min_points).dc_distances()
     return dc_dists

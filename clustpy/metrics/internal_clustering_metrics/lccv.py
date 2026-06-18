@@ -1,18 +1,19 @@
-# Implementation of LCCV by
-# - Author: us
-# - Source: this git
-# - License: -
+"""
+@authors:
+Lena Krieger and Pascal Weber
+"""
 
 # Paper: A Novel Cluster Validity Index Based on Local Cores
-# Link: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8424512
 # Authors: Dongdong Cheng, Qingsheng Zhu, Jinlong Huang, Quanwang Wu, and Lijun Yang
+# Link: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8424512
 
 
+import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import floyd_warshall
 from scipy.spatial.distance import cdist
-import numpy as np
-
+from sklearn.preprocessing import LabelEncoder
+from clustpy.metrics._metrics_utils import _check_length_data_and_labels, handle_noise
 
 def nan_searching(X, dist):
     # NaN seraching Algorithm 1
@@ -135,7 +136,43 @@ def LORE(LN, rho, X, dist):
     return local_cores, rep
 
 
-def lccv_score(X, labels):
+def lccv_score(X, labels, noise_strategy="keep"):
+    """
+    Calculate LCCV-index for cluster validation, as defined in [1]
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        List of n_features-dimensional data points. Each row corresponds
+        to a single data point.
+    labels : array-like, shape (n_samples,)
+        Predicted labels for each sample.  (-1 - for noise)
+    noise_strategy : str
+        Strategy for handling noise. Must be one of:
+        - "keep"               : Keep all noise points as they are (default).
+        - "as_one_cluster"     : Assign all noise points to a single new cluster.
+        - "as_singletons"      : Assign each noise point to its own cluster.
+        - "filter"             : Remove all noise points.
+        - "to_nearest_cluster" : Assign each noise point to nearest cluster.
+
+    Returns
+    -------
+    lccv : float,
+        The resulting LCCV validity index.
+
+    References:
+    -----------
+    .. [1] A Novel Cluster Validity Index Based on Local Cores
+           by Dongdong Cheng, Qingsheng Zhu, Jinlong Huang, Quanwang Wu, and Lijun Yang
+           see https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8424512
+    """
+    labels, X = handle_noise(labels, strategy=noise_strategy, X=X)
+    labels[labels != -1] = LabelEncoder().fit_transform(labels[labels != -1])
+    X, labels = _check_length_data_and_labels(X, labels)
+    assert isinstance(labels, np.ndarray), "labels must be of type np.ndarray. Your input has type {0}".format(
+        type(labels)
+    )
+
     # euclidean pairwise distance
     dist = cdist(X, X)
     # number of datapoints

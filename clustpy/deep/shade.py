@@ -99,7 +99,7 @@ class SHADE(_AbstractDeepClusteringAlgo):
     References
     ----------
     SHADE: Deep Density-based Clustering
-    Anna Beer; Pascal Weber; Lukas Miklautz; Collin Leiber; Walid Durani; Christian Böhm
+    Anna Beer, Pascal Weber, Lukas Miklautz, Collin Leiber, Walid Durani, Christian Böhm
     IEEE International Conference on Data Mining (ICDM), Abu Dhabi, United Arab Emirates, 2024, pp. 675-680, doi: 10.1109/ICDM59182.2024.
     """
 

@@ -11,10 +11,11 @@
 #    (1) 503- 513 to move labeling from to zero, e.g., 1,3,5 -> 0,1,2
 
 
-"""Created by lashkov on 31.10.18"""
 import math
 import numpy as np
 from scipy.spatial.distance import cdist
+from sklearn.preprocessing import LabelEncoder
+from clustpy.metrics._metrics_utils import _check_length_data_and_labels, handle_noise
 
 
 def calc_nearest_points(X, labels, unique_labels, centroids, metric):
@@ -33,10 +34,10 @@ def calc_nearest_points(X, labels, unique_labels, centroids, metric):
     centroids : dict-like,
         Key: cluster index, Value: n_features-dimensional data point
     metric : str,
-        The distance metric, can be ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’, ‘correlation’,
-        ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’, ‘jaccard’, ‘kulsinski’, ‘mahalanobis’, ‘matching’, ‘minkowski’,
-        ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’, ‘sokalmichener’, ‘sokalsneath’, ‘sqeuclidean’, ‘wminkowski’,
-        ‘yule’. Default is ‘euclidean’.
+        The distance metric, can be 'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation',
+        'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis', 'matching', 'minkowski',
+        'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski',
+        'yule'. Default is 'euclidean'.
 
     Returns
     -------
@@ -80,122 +81,6 @@ def calc_centroids(X, unique_labels, labels, centr):
     return centers
 
 
-def filter_noise_lab(X, labels):
-    """
-    Filter noise points
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        List of n_features-dimensional data points. Each row corresponds
-        to a single data point.
-    labels : array-like, shape (n_samples,)
-        Predicted labels for each sample.  (-1 - for noise)
-
-    Returns
-    -------
-    filterLabel : array-like, shape (n_samples,)
-        Filtered predicted labels for each sample.
-    filterXYZ : array-like, shape (n_samples, n_features)
-        List of n_features-dimensional data points. Each row corresponds
-        to a single data point. Data points which label = -1 was removed.
-    """
-    filterLabel = labels[labels != -1]
-    filterXYZ = X[labels != -1]
-    return filterLabel, filterXYZ
-
-
-def bind_noise_lab(X, labels, metric):
-    """
-    Bind noise points to nearest cluster
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        List of n_features-dimensional data points. Each row corresponds
-        to a single data point.
-    labels : array-like, shape (n_samples,)
-        Predicted labels for each sample.  (-1 - for noise)
-    metric : str,
-        The distance metric, can be ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’, ‘correlation’,
-        ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’, ‘jaccard’, ‘kulsinski’, ‘mahalanobis’, ‘matching’, ‘minkowski’,
-        ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’, ‘sokalmichener’, ‘sokalsneath’, ‘sqeuclidean’, ‘wminkowski’,
-        ‘yule’. Default is ‘euclidean’.
-
-    Returns
-    -------
-    labels : array-like, shape (n_samples,)
-        Modified predicted labels for each sample. to a single data point.
-        Data points which label = -1 was bound to nearest clusters.
-    """
-
-    labels = labels.copy()
-    if -1 not in set(labels):
-        return labels
-    if len(set(labels)) == 1 and -1 in set(labels):
-        raise ValueError('Labels contains noise point only')
-    label_id = []
-    label_new = []
-    for i in range(len(labels)):
-        if labels[i] == -1:
-            point = np.array([X[i]])
-            dist = cdist(X[labels != -1], point, metric=metric)
-            lid = np.where(np.all(X == X[labels != -1][np.argmin(dist), :], axis=1))[0][0]
-            label_id.append(i)
-            label_new.append(labels[lid])
-    labels[np.array(label_id)] = np.array(label_new)
-    return labels
-
-
-def sep_noise_lab(labels):
-    """
-    Definition of each noise point as a separate cluster
-
-    Parameters
-    ----------
-    labels : array-like, shape (n_samples,)
-        Predicted labels for each sample.  (-1 - for noise)
-
-    Returns
-    -------
-    labels : array-like, shape (n_samples,)
-        Modified predicted labels for each sample. to a single data point.
-        Each data points which label = -1 was defined as a separate cluster.
-    """
-    labels = labels.copy()
-    max_label = np.max(labels)
-    j = max_label + 1
-    for i in range(len(labels)):
-        if labels[i] == -1:
-            labels[i] = j
-            j += 1
-    return labels
-
-
-def comb_noise_lab(labels):
-    """
-    Combining all noise points into one cluster
-
-    Parameters
-    ----------
-    labels : array-like, shape (n_samples,)
-        Predicted labels for each sample.  (-1 - for noise)
-
-    Returns
-    -------
-    labels : array-like, shape (n_samples,)
-        Modified predicted labels for each sample. to a single data point.
-        All data points which label = -1 was combined into a one cluster.
-    """
-    labels = labels.copy()
-    max_label = np.max(labels)
-    j = max_label + 1
-    for i in range(len(labels)):
-        if labels[i] == -1:
-            labels[i] = j
-    return labels
-
-
 def centroid_distance(unique_labels, centroids, metric):
     """
     Calculation of distances between cluster centers given by: (Dmax/Dmin) * sum{forall i in 1:|C|} 1 /( sum{forall j in 1:|C|} ||vi - vj|| )
@@ -207,10 +92,10 @@ def centroid_distance(unique_labels, centroids, metric):
     centroids : dict-like,
         Key: cluster index, Value: n_features-dimensional data point
     metric : str,
-        The distance metric, can be ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’, ‘correlation’,
-        ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’, ‘jaccard’, ‘kulsinski’, ‘mahalanobis’, ‘matching’, ‘minkowski’,
-        ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’, ‘sokalmichener’, ‘sokalsneath’, ‘sqeuclidean’, ‘wminkowski’,
-        ‘yule’. Default is ‘euclidean’.
+        The distance metric, can be 'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation',
+        'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis', 'matching', 'minkowski',
+        'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski',
+        'yule'. Default is 'euclidean'.
 
     Returns
     -------
@@ -268,9 +153,9 @@ def calc_density(X, centroids, labels, stdev, clusters_list, method, density_dic
 
     References:
     -----------
-    .. [1] M. Halkidi and M. Vazirgiannis, “Clustering validity assessment: Finding the optimal partitioning
-        of a data set,” in ICDM, Washington, DC, USA, 2001, pp. 187–194.
-    .. [2] Youngok Kim and Soowon Lee. A clustering validity assessment Index. PAKDD’2003, Seoul, Korea, April 30–May 2,
+    .. [1] M. Halkidi and M. Vazirgiannis, "Clustering validity assessment: Finding the optimal partitioning
+        of a data set," in ICDM, Washington, DC, USA, 2001, pp. 187–194.
+    .. [2] Youngok Kim and Soowon Lee. A clustering validity assessment Index. PAKDD'2003, Seoul, Korea, April 30–May 2,
         2003, LNAI 2637, 602–608
     .. [3] Tong, J. & Tan, H. J. Electron.(China) (2009) 26: 258. https://doi.org/10.1007/s11767-007-0151-8
     """
@@ -347,9 +232,9 @@ def Dens_bw(X, centroids, labels, unique_labels, method='Halkidi'):
 
     References:
     -----------
-    .. [1] M. Halkidi and M. Vazirgiannis, “Clustering validity assessment: Finding the optimal partitioning
-        of a data set,” in ICDM, Washington, DC, USA, 2001, pp. 187–194.
-    .. [2] Youngok Kim and Soowon Lee. A clustering validity assessment Index. PAKDD’2003, Seoul, Korea, April 30–May 2,
+    .. [1] M. Halkidi and M. Vazirgiannis, "Clustering validity assessment: Finding the optimal partitioning
+        of a data set," in ICDM, Washington, DC, USA, 2001, pp. 187–194.
+    .. [2] Youngok Kim and Soowon Lee. A clustering validity assessment Index. PAKDD'2003, Seoul, Korea, April 30–May 2,
         2003, LNAI 2637, 602–608
     .. [3] Tong, J. & Tan, H. J. Electron.(China) (2009) 26: 258. https://doi.org/10.1007/s11767-007-0151-8
     """
@@ -410,9 +295,9 @@ def Scat(X, unique_labels, labels, method):
 
     References:
     -----------
-    .. [1] M. Halkidi and M. Vazirgiannis, “Clustering validity assessment: Finding the optimal partitioning
-        of a data set,” in ICDM, Washington, DC, USA, 2001, pp. 187–194.
-    .. [2] Youngok Kim and Soowon Lee. A clustering validity assessment Index. PAKDD’2003, Seoul, Korea, April 30–May 2,
+    .. [1] M. Halkidi and M. Vazirgiannis, "Clustering validity assessment: Finding the optimal partitioning
+        of a data set," in ICDM, Washington, DC, USA, 2001, pp. 187–194.
+    .. [2] Youngok Kim and Soowon Lee. A clustering validity assessment Index. PAKDD'2003, Seoul, Korea, April 30–May 2,
      2003, LNAI 2637, 602–608
     .. [3] Tong, J. & Tan, H. J. Electron.(China) (2009) 26: 258. https://doi.org/10.1007/s11767-007-0151-8
     """
@@ -437,8 +322,16 @@ def Scat(X, unique_labels, labels, method):
     return result
 
 
-def sdbw_score(X, labels, centers_id=None, method='Halkidi', alg_noise='filter',
-          centr='mean', nearest_centr=True, metric='euclidean'):
+def s_dbw_score(
+    X,
+    labels,
+    centers_id=None,
+    method="Halkidi",
+    noise_strategy="filter",
+    centr="mean",
+    nearest_centr=True,
+    metric="euclidean",
+):
     """
     Compute the S_Dbw validity index
     S_Dbw validity index is defined by equation:
@@ -460,21 +353,21 @@ def sdbw_score(X, labels, centers_id=None, method='Halkidi', alg_noise='filter',
         'Halkidi' - original paper [1]
         'Kim' - see [2]
         'Tong' - see [3]
-    alg_noise : str,
-        Algorithm for recording noise points.
-        'comb' - combining all noise points into one cluster (default)
-        'sep' - definition of each noise point as a separate cluster
-        'bind' -  binding of each noise point to the cluster nearest from it
-        'filter' - filtering noise points
+    noise_strategy : str
+        Strategy for handling noise. Must be one of:
+        - "as_one_cluster"     : Assign all noise points to a single new cluster (default).
+        - "as_singletons"      : Assign each noise point to its own cluster.
+        - "filter"             : Remove all noise points.
+        - "to_nearest_cluster" : Assign each noise point to nearest cluster.
     centr : str,
         cluster center calculation method (mean (default) or median)
     nearest_centr : bool,
         The centroid corresponds to the cluster point closest to the geometric center (default: True).
     metric : str,
-        The distance metric, can be ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’, ‘correlation’,
-        ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’, ‘jaccard’, ‘kulsinski’, ‘mahalanobis’, ‘matching’, ‘minkowski’,
-        ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’, ‘sokalmichener’, ‘sokalsneath’, ‘sqeuclidean’, ‘wminkowski’,
-        ‘yule’. Default is ‘euclidean’.
+        The distance metric, can be 'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation',
+        'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis', 'matching', 'minkowski',
+        'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski',
+        'yule'. Default is 'euclidean'.
 
     Returns
     -------
@@ -483,36 +376,19 @@ def sdbw_score(X, labels, centers_id=None, method='Halkidi', alg_noise='filter',
 
     References:
     -----------
-    .. [1] M. Halkidi and M. Vazirgiannis, “Clustering validity assessment: Finding the optimal partitioning
-        of a data set,” in ICDM, Washington, DC, USA, 2001, pp. 187–194.
-    .. [2] Youngok Kim and Soowon Lee. A clustering validity assessment Index. PAKDD’2003, Seoul, Korea, April 30–May 2,
+    .. [1] M. Halkidi and M. Vazirgiannis, "Clustering validity assessment: Finding the optimal partitioning
+        of a data set," in ICDM, Washington, DC, USA, 2001, pp. 187–194.
+    .. [2] Youngok Kim and Soowon Lee. A clustering validity assessment Index. PAKDD'2003, Seoul, Korea, April 30–May 2,
         2003, LNAI 2637, 602–608
     .. [3] Tong, J. & Tan, H. J. Electron.(China) (2009) 26: 258. https://doi.org/10.1007/s11767-007-0151-8
     """
+    assert noise_strategy != "keep", "S_DBw score is not defined for noise points."
+    labels, X = handle_noise(labels, strategy=noise_strategy, X=X)
+    labels = LabelEncoder().fit_transform(labels)
+    X, labels = _check_length_data_and_labels(X, labels)
+    assert isinstance(labels, np.ndarray), "labels must be of type np.ndarray. Your input has type {0}".format(type(labels))
 
-    if len(set(labels)) < 2 or len(set(labels)) > len(X) - 1:
-        raise ValueError("No. of unique labels must be > 1 and < n_samples")
-    if alg_noise == 'sep':
-        labels = sep_noise_lab(labels)
-    elif alg_noise == 'bind':
-        labels = bind_noise_lab(X, labels, metric=metric)
-    elif alg_noise == 'comb':
-        labels = comb_noise_lab(labels)
-    elif alg_noise == 'filter':
-        labels, X = filter_noise_lab(X, labels)
     unique_labels = np.unique(labels)
-    # move labels to start by 0 ignoring -1 (e.g. -1,1,3,5 -> -1,0,1,2)
-    for i, lab in enumerate(unique_labels):
-        if lab == -1:
-            continue
-        labels[labels == lab] = i
-    unique_labels = range(len(unique_labels))
-    # move labels to start by 0 including -1 (e.g. -1,0,1,2 -> 0,1,2,3)
-    if -1 in np.unique(labels):
-        for lab in reversed(list(np.unique(labels))):
-            labels[labels == lab] = lab + 1
-    if np.size(unique_labels) < 2:
-        raise ValueError('Only one cluster!')
     if centers_id:
         centroids = dict()
         for index, label in enumerate(unique_labels):
@@ -558,10 +434,10 @@ def SD(X, labels, k=1.0, centers_id=None, alg_noise='comb', centr='mean', neares
     nearest_centr : bool,
         The centroid corresponds to the cluster point closest to the geometric center (default: True).
     metric : str,
-        The distance metric, can be ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’, ‘correlation’,
-        ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’, ‘jaccard’, ‘kulsinski’, ‘mahalanobis’, ‘matching’, ‘minkowski’,
-        ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’, ‘sokalmichener’, ‘sokalsneath’, ‘sqeuclidean’, ‘wminkowski’,
-        ‘yule’. Default is ‘euclidean’.
+        The distance metric, can be 'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation',
+        'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis', 'matching', 'minkowski',
+        'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski',
+        'yule'. Default is 'euclidean'.
 
     Returns
     -------

@@ -16,11 +16,8 @@ from .internal_clustering_metrics import (
     disco_noise_samples,
     dsi_score,
     lccv_score,
-    sdbw_score,
+    s_dbw_score,
     viasckde_score,
-    # from sklearn
-    silhouette_score,
-    silhouette_samples,
 )
 from .pair_counting_scores import (
     PairCountingScores,
@@ -62,10 +59,8 @@ __all__ = [
     "disco_noise_samples",
     "dsi_score",
     "lccv_score",
-    "sdbw_score",
+    "s_dbw_score",
     "viasckde_score",
-    "silhouette_score",
-    "silhouette_samples",
     # pair_counting_scores
     "PairCountingScores",
     "pc_f1_score",

@@ -1,52 +1,34 @@
-# Implementation of VIASCKDE by
-# - Author: Ali Şenol - Github user `senoali`
-# - Source: https://github.com/senolali/VIASCKDE/blob/main/VIASCKDE.py
-# - License: GPL-3.0 licence (https://github.com/senolali/VIASCKDE/blob/main/LICENSE)
-
-# Paper: VIASCKDE Index: A Novel Internal Cluster Validity Index for Arbitrary-Shaped Clusters Based on the Kernel Density Estimation
-# Link: https://doi.org/10.1155/2022/4059302
-# Authors: Ali Şenol
-
-
-from scipy.spatial import KDTree
-from sklearn.neighbors import KernelDensity
 import numpy as np
+from clustpy.metrics import viasckde_score
 
 
-def closest_node(n, v):
-    kdtree = KDTree(v)
-    d, i = kdtree.query(n)
-    return d
+def test_viasckde_score():
+    X = np.array(
+        [
+            # Cluster 0 (dense, tight)
+            [0.0, 0.0],
+            [0.1, 0.0],
+            [0.0, 0.1],
+            [0.1, 0.1],
+            [0.2, 0.0],
+            # Cluster 1 (sparser, stretched)
+            [3.0, 3.0],
+            [3.5, 3.2],
+            [4.0, 4.5],
+            [2.8, 3.8],
+            # Cluster 2 (very sparse / outlier-ish)
+            [10.0, 10.0],
+            [12.0, 11.0],
+        ]
+    )
+    L1 = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1])
+    L2 = np.array([0, 0, 1, 1, 1, 1, 1, 1, 1, -1, -1])
+    L3 = np.array([1, 1, 1, 0, 0, 1, 1, 0, 0, -1, -1])
 
+    viasckde_correct_labels = viasckde_score(X, L1)
+    viasckde_wrong_labels1 = viasckde_score(X, L2)
+    viasckde_wrong_labels2 = viasckde_score(X, L3)
 
-def viasckde_score(X, labels, krnl='gaussian', b_width=0.05):
-    CoSeD = np.array([], [])
-    num_k = np.unique(labels)
-    kde = KernelDensity(kernel=krnl, bandwidth=b_width).fit(X)
-    iso = kde.score_samples(X)
-
-    ASC = np.array([])
-    numC = np.array([])
-    CoSeD = np.array([])
-    viasc = 0
-    if len(num_k) > 1:
-        for i in num_k:
-            data_of_cluster = X[labels == i]
-            data_of_not_its = X[labels != i]
-            isos = iso[labels == i]
-            isos = (isos - min(isos)) / (max(isos) - min(isos))
-            for j in range(len(data_of_cluster)):  # for each data of cluster j
-                row = np.delete(data_of_cluster, j, 0)  # exclude the data j
-                XX = data_of_cluster[j]
-                a = closest_node(XX, row)
-                b = closest_node(XX, data_of_not_its)
-                ASC = np.hstack((ASC, ((b - a) / max(a, b)) * isos[j]))
-            numC = np.hstack((numC, ASC.size))
-            CoSeD = np.hstack((CoSeD, ASC.mean()))
-        for k in range(len(numC)):
-            viasc += numC[k] * CoSeD[k]
-        viasc = viasc / sum(numC)
-        # print("viasc=%0.4f" % viasc)
-    else:
-        viasc = float("nan")
-    return viasc
+    assert viasckde_correct_labels > viasckde_wrong_labels1
+    assert viasckde_correct_labels > viasckde_wrong_labels2
+    assert viasckde_wrong_labels1 > viasckde_wrong_labels2

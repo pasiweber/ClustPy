@@ -1,11 +1,15 @@
+import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from scipy.spatial.distance import pdist
-import numpy as np
-from clustpy.metrics._metrics_utils import _check_length_data_and_labels
+from clustpy.metrics._metrics_utils import _check_length_data_and_labels, handle_noise
 
 
 def cvnn_score(
-    X: np.ndarray, labels: np.ndarray | int | tuple, n_neighbors: int = 5, metric: str = "euclidean"
+    X: np.ndarray,
+    labels: np.ndarray | int | tuple,
+    n_neighbors: int = 5,
+    metric: str = "euclidean",
+    noise_strategy="keep",
 ) -> float | np.ndarray:
     """
     Evaluate the quality of predicted labels by computing the clustering validation index based on nearest neighbors (CVNN).
@@ -26,6 +30,13 @@ def cvnn_score(
     metric : str
         The metric used to identify the neighbors and to calculate the inner-cluster distance.
         See scipy.spatial.distance.pdist for more information (default: 'euclidean')
+    noise_strategy : str
+        Strategy for handling noise. Must be one of:
+        - "keep"               : Keep all noise points as they are (default).
+        - "as_one_cluster"     : Assign all noise points to a single new cluster.
+        - "as_singletons"      : Assign each noise point to its own cluster.
+        - "filter"             : Remove all noise points.
+        - "to_nearest_cluster" : Assign each noise point to nearest cluster.
 
     Returns
     -------
@@ -39,10 +50,9 @@ def cvnn_score(
     IEEE transactions on cybernetics 43.3 (2013): 982-994.
     Link: https://ieeexplore.ieee.org/document/6341117
     """
+    labels, X = handle_noise(labels, strategy=noise_strategy, X=X)
 
-    def _internal_cvnn_score(
-        X: np.ndarray, labels: np.ndarray, nrbs_indices: np.ndarray, metric: str
-    ) -> (float, float):
+    def _internal_cvnn_score(X: np.ndarray, labels: np.ndarray, nrbs_indices: np.ndarray, metric: str) -> (float, float):
         """
         The real calculation method of the CVNN score.
 
@@ -63,9 +73,7 @@ def cvnn_score(
             The cluster spearation and cluster compactness value
         """
         X, labels = _check_length_data_and_labels(X, labels)
-        assert isinstance(labels, np.ndarray), "labels must be of type np.ndarray. Your input has type {0}".format(
-            type(labels)
-        )
+        assert isinstance(labels, np.ndarray), "labels must be of type np.ndarray. Your input has type {0}".format(type(labels))
         unique_clusters = np.unique(labels)
         # Calculate neighbor weights
         n_neighbors = nrbs_indices.shape[1]
@@ -74,7 +82,7 @@ def cvnn_score(
         cluster_compactness_scores = np.zeros(unique_clusters.shape[0])
         # Do per-cluster calculations
         for i, c in enumerate(unique_clusters):
-            in_cluster = labels == c
+            in_cluster = (labels == c)
             # Calculate separation (mean of neighbor weights in cluster)
             cluster_separation_scores[i] = n_neighbors_not_in_cluster[in_cluster].mean()
             # Calculate compartness (mean of pair-wise distances in cluster)
@@ -114,9 +122,5 @@ def cvnn_score(
         cluster_separation, cluster_compactness = _internal_cvnn_score(X, labels, nrbs_indices, metric)
         cvnn = cluster_separation + cluster_compactness
     else:
-        raise ValueError(
-            "The labels must be of type list/tuple (indicating a list of different labels) or np.ndarray (indicating a single labels array). Your input is {0}".format(
-                type(labels)
-            )
-        )
+        raise ValueError("The labels must be of type list/tuple (indicating a list of different labels) or np.ndarray (indicating a single labels array). Your input is {0}".format(type(labels)))
     return cvnn

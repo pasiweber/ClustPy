@@ -1,413 +1,345 @@
-"""Evaluation metric DISCO."""
-
-# Implementation of DISCO by
-# - Author: us
-# - Source: this git
-# - License: -
-
-# Paper: submitted with this code
-# Authors: anonymous authors
-# Link: comming soon
-
-
-from __future__ import annotations
-
 import numpy as np
+from clustpy.metrics.internal_clustering_metrics.disco import disco_score, disco_samples, p_cluster, p_noise
+import pytest
 from sklearn.metrics import silhouette_samples
 from sklearn.neighbors import KDTree
 
-from clustpy.utils.dctree import DCTree
-# from SHiP import SHiP
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _make_two_blobs():
+    """Two tight, well-separated 2-D blobs with 4 points each."""
+    X = np.array(
+        [[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0], [9.0, 9.0], [9.0, 10.0], [10.0, 9.0], [10.0, 10.0]],
+        dtype=float,
+    )
+    labels = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+    return X, labels
+
+def _make_symmetric_dist_matrix(n):
+    """Return a valid symmetric distance matrix filled with predictable values."""
+    rng = np.random.default_rng(0)
+    raw = rng.random((n, n))
+    D = (raw + raw.T) / 2
+    np.fill_diagonal(D, 0.0)
+    return D
 
 
-def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> float:
-    """Compute the mean DISCO score of all samples.
+# ---------------------------------------------------------------------------
+# disco_score — edge cases
+# ---------------------------------------------------------------------------
 
-    The DISCO score is a measure of how well samples are clustered
-    with samples that are similar to themselves. Clustering models with a high
-    DISCO score are said to be dense, where samples in the same
-    cluster are similar to each other, and well separated, where samples in
-    different clusters are not very similar to each other.
-    Additionally, the DISCO score measures noise in relation to the given
-    clustering. If noise lays within a sparse region and is far away from
-    cluster regions it scores a high value, otherwise it will get a low value.
+def test_disco_score_empty_dataset_raises():
+    with pytest.raises(ValueError, match="empty"):
+        disco_score(np.empty((0, 2)), np.array([]))
 
-    The DISCO score is calculated using the mean intra-cluster on the
-    dc-distance (``a``) and the mean nearest-cluster on the dc-distance (``b``)
-    for each non noise sample.  The DISCO score for a non noise sample is
-    ``(b - a) / max(a, b)``.
-    To clarify, ``b`` is the dc-distance between a non noise sample and the nearest
-    cluster that the sample is not a part of.
-    ``-1`` in labels are considered as noise and their DISCO score is calculated
-    by the minimum of the two different measures ``p_sparse`` and ``p_far``.
-    ``p_sparse`` measures how well the noise sample is within a sparse region.
-    ``p_far`` measure how well the noise is remote to non noise samples.
-    Note that DISCO score is defined for all possible number of labels
-    ``1 <= n_labels <= n_samples``.
-    Except for ``-1`` every other value is considered as cluster label.
+def test_disco_score_length_mismatch_raises():
+    X = np.array([[0, 0], [1, 1]])
+    labels = np.array([0, 0, 1])
+    with pytest.raises(ValueError):
+        disco_score(X, labels)
 
-    This function returns the mean DISCO score over all samples.
-    To obtain the values for each sample, use :func:`disco_samples`.
+def test_disco_score_only_noise_returns_minus_one():
+    X = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+    labels = np.array([-1, -1, -1])
+    scores = disco_samples(X, labels)
+    assert scores.shape == (3,)
+    assert np.all(scores == -1.0)
+    assert disco_score(X, labels) == -1.0
 
-    The best value is 1 and the worst value is -1. Values near 0 indicate
-    overlapping clusters. Negative values generally indicate that a sample has
-    been assigned to the wrong cluster, as a different cluster is more similar.
+def test_disco_score_single_cluster_no_noise_returns_zero():
+    X = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+    labels = np.array([0, 0, 0])
+    scores = disco_samples(X, labels)
+    assert scores.shape == (3,)
+    assert np.all(scores == 0.0)
+    assert disco_score(X, labels) == 0.0
 
-    Read more in the :ref:`User Guide <disco_score>`.
+def test_disco_score_equals_mean_of_disco_samples():
+    X, labels = _make_two_blobs()
+    assert disco_score(X, labels) == pytest.approx(np.mean(disco_samples(X, labels)))
 
+def test_disco_score_scores_in_valid_range():
+    X, labels = _make_two_blobs()
+    scores = disco_samples(X, labels)
+    assert np.all(scores >= -1.0)
+    assert np.all(scores <= 1.0)
 
-    Parameters
-    ----------
-    X : {array-like, sparse matrix} of (n_samples_a, n_features)
-        A feature array.
+def test_disco_score_output_shape_matches_input():
+    X, labels = _make_two_blobs()
+    scores = disco_samples(X, labels)
+    assert scores.shape == (len(X),)
 
-    labels : array-like of shape (n_samples,)
-        Predicted labels for each sample.
+def test_disco_score_well_separated_blobs_positive_score():
+    """Two tight, well-separated clusters should yield a clearly positive mean score."""
+    X, labels = _make_two_blobs()
+    assert disco_score(X, labels, min_points=1) > 0.5
 
-    min_points : int
-        ``min_points`` value to use for the dc-distance.
-
-
-    Returns
-    -------
-    disco_score : float
-        Mean DISCO score for all samples.
-
-
-    References
-    ----------
-    .. [1] `anonymous`_
+def test_disco_score_overlapping_clusters_lower_score():
+    """Scrambled labels should yield a lower mean score than correct labels."""
+    X, _ = _make_two_blobs()
+    correct_labels = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+    bad_labels = np.array([0, 1, 0, 1, 0, 1, 0, 1])
+    assert disco_score(X, correct_labels, min_points=1) > disco_score(X, bad_labels, min_points=1)
 
 
-    Examples
-    --------
-    >>> from disco import disco_score
-    >>> from sklearn.datasets import make_moons
-    >>> from sklearn.cluster import HDBSCAN
-    >>> X, y = make_moons(random_state=42)
-    >>> hdbscan = HDBSCAN()
-    >>> labels = hdbscan.fit_predict(X).labels_
-    >>> disco_score(X, labels)
-    0.71...
+# ---------------------------------------------------------------------------
+# disco_samples — with noise
+# ---------------------------------------------------------------------------
 
+def test_disco_samples_noise_scores_in_valid_range():
+    X, labels = _make_two_blobs()
+    labels_with_noise = labels.copy()
+    labels_with_noise[0] = -1  # demote first point to noise
+    scores = disco_samples(X, labels_with_noise)
+    assert scores.shape == (len(X),)
+    assert np.all(scores >= -1.0)
+    assert np.all(scores <= 1.0)
+
+
+def test_disco_samples_noise_far_from_clusters_has_positive_score():
+    """A noise point far from any cluster should get a positive DISCO score."""
+    X = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, 1.0],
+            [1.0, 0.0],
+            [1.0, 1.0],  # cluster 0
+            [9.0, 9.0],
+            [9.0, 10.0],
+            [10.0, 9.0],
+            [10.0, 10.0],  # cluster 1
+            [50.0, 50.0],
+        ],  # far noise
+        dtype=float,
+    )
+    labels = np.array([0, 0, 0, 0, 1, 1, 1, 1, -1])
+    scores = disco_samples(X, labels)
+    # The remote noise point should score positively
+    assert scores[-1] > 0.0
+
+def test_disco_samples_noise_inside_cluster_has_negative_score():
+    """A noise point sitting inside a dense cluster should get a negative DISCO score."""
+    X = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, 1.0],
+            [1.0, 0.0],
+            [1.0, 1.0],  # cluster 0
+            [9.0, 9.0],
+            [9.0, 10.0],
+            [10.0, 9.0],
+            [10.0, 10.0],  # cluster 1
+            [0.5, 0.5],
+        ],  # noise at cluster 0's centroid
+        dtype=float,
+    )
+    labels = np.array([0, 0, 0, 0, 1, 1, 1, 1, -1])
+    scores = disco_samples(X, labels)
+    # The noise point inside the cluster should score negatively
+    assert scores[-1] < 0.0
+
+def test_disco_samples_single_cluster_with_noise_scores_shape():
+    """One cluster + noise: result must still cover all samples."""
+    X = np.array([[0.0, 0.0], [1.0, 0.0], [0.5, 0.5], [100.0, 100.0]], dtype=float)
+    labels = np.array([0, 0, 0, -1])
+    scores = disco_samples(X, labels, min_points=1)
+    assert scores.shape == (4,)
+    assert np.all(scores >= -1.0)
+    assert np.all(scores <= 1.0)
+
+
+# ---------------------------------------------------------------------------
+# p_cluster
+# ---------------------------------------------------------------------------:
+
+def test_p_cluster_empty_returns_empty():
+    result = p_cluster(np.empty((0, 2)), np.array([]))
+    assert result.shape == (0,)
+
+def test_p_cluster_single_sample_returns_zero():
+    result = p_cluster(np.array([[1.0, 2.0]]), np.array([0]))
+    assert result == pytest.approx(np.array([0.0]))
+
+def test_p_cluster_all_same_label_returns_zeros():
+    X = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+    labels = np.array([0, 0, 0])
+    result = p_cluster(X, labels)
+    assert np.all(result == 0.0)
+
+def test_p_cluster_each_own_label_returns_zeros():
+    X = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+    labels = np.array([0, 1, 2])
+    result = p_cluster(X, labels)
+    assert np.all(result == 0.0)
+
+def test_p_cluster_length_mismatch_raises():
+    with pytest.raises(ValueError):
+        p_cluster(np.array([[0, 0], [1, 1]]), np.array([0, 0, 1]))
+
+def test_p_cluster_precomputed_matches_sklearn_silhouette():
+    """With a precomputed distance matrix p_cluster must equal sklearn's silhouette_samples."""
+    n = 6
+    D = _make_symmetric_dist_matrix(n)
+    labels = np.array([0, 0, 0, 1, 1, 1])
+    result = p_cluster(D, labels, precomputed_dc_dists=True)
+    expected = silhouette_samples(D, labels, metric="precomputed")
+    np.testing.assert_allclose(result, expected)
+
+def test_p_cluster_precomputed_invalid_matrix_raises():
+    """Non-square matrix with precomputed=True must raise."""
+    with pytest.raises(ValueError):
+        p_cluster(np.zeros((3, 4)), np.array([0, 0, 1]), precomputed_dc_dists=True)
+
+def test_p_cluster_output_range():
+    X, labels = _make_two_blobs()
+    result = p_cluster(X, labels)
+    assert result.shape == (len(X),)
+    assert np.all(result >= -1.0)
+    assert np.all(result <= 1.0)
+
+def test_p_cluster_well_separated_blobs_high_score():
+    X, labels = _make_two_blobs()
+    result = p_cluster(X, labels, min_points=2)
+    p_cluster_values = np.array(
+        [0.91161165, 0.91161165, 0.91161165, 0.91161165, 0.91161165, 0.91161165, 0.91161165, 0.91161165]
+    )
+    np.testing.assert_allclose(result, p_cluster_values)
+
+
+# ---------------------------------------------------------------------------
+# p_noise
+# ---------------------------------------------------------------------------
+
+def test_p_noise_empty_raises():
+    with pytest.raises(ValueError, match="empty"):
+        p_noise(np.empty((0, 2)), np.array([]))
+
+def test_p_noise_length_mismatch_raises():
+    with pytest.raises(ValueError):
+        p_noise(np.array([[0, 0], [1, 1]]), np.array([0, 0, -1]))
+
+def test_p_noise_only_noise_returns_minus_one():
+    X = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+    labels = np.array([-1, -1, -1])
+    p_sparse, p_far = p_noise(X, labels)
+    assert np.all(p_sparse == -1.0)
+    assert np.all(p_far == -1.0)
+
+def test_p_noise_no_noise_returns_empty_arrays():
+    X, labels = _make_two_blobs()
+    p_sparse, p_far = p_noise(X, labels)
+    assert len(p_sparse) == 0
+    assert len(p_far) == 0
+
+def test_p_noise_output_count_matches_noise_count():
+    """p_noise output size must equal the number of -1 labels."""
+    X = np.array(
+        [[0.0, 0.0], [1.0, 0.0], [9.0, 9.0], [10.0, 9.0], [50.0, 50.0]],
+        dtype=float,
+    )
+    labels = np.array([0, 0, 1, 1, -1])
+    p_sparse, p_far = p_noise(X, labels)
+    n_noise = (labels == -1).sum()
+    assert p_sparse.shape == (n_noise,)
+    assert p_far.shape == (n_noise,)
+
+def test_p_noise_output_range():
+    X = np.array(
+        [[0.0, 0.0], [1.0, 0.0], [9.0, 9.0], [10.0, 9.0], [50.0, 50.0]],
+        dtype=float,
+    )
+    labels = np.array([0, 0, 1, 1, -1])
+    p_sparse, p_far = p_noise(X, labels)
+    assert np.all(p_sparse >= -1.0) and np.all(p_sparse <= 1.0)
+    assert np.all(p_far >= -1.0) and np.all(p_far <= 1.0)
+
+def test_p_noise_precomputed_dc_dists_gives_same_result():
+    """Passing precomputed dc_dists must yield identical output to computing them internally."""
+    X = np.array(
+        [[0.0, 0.0], [1.0, 0.0], [9.0, 9.0], [10.0, 9.0], [50.0, 50.0]],
+        dtype=float,
+    )
+    labels = np.array([0, 0, 1, 1, -1])
+    dc_dists = np.array([
+        [0.0, 70.71067812, 70.71067812, 70.71067812, 70.71067812],
+        [70.71067812, 0.0, 70.00714249, 70.00714249, 70.71067812],
+        [70.71067812, 70.00714249, 0.0, 57.98275606, 70.71067812],
+        [70.71067812, 70.00714249, 57.98275606, 0.0, 70.71067812],
+        [70.71067812, 70.71067812, 70.71067812, 70.71067812, 0.0],
+    ])
+    p_sparse_pre, p_far_pre = p_noise(X, labels, dc_dists=dc_dists)
+    p_sparse_calc, p_far_calc = p_noise(X, labels)
+    np.testing.assert_allclose(p_sparse_pre, p_sparse_calc, rtol=0, atol=1e-10)
+    np.testing.assert_allclose(p_far_pre, p_far_calc, rtol=0, atol=1e-10)
+
+def test_p_noise_far_noise_higher_p_far_than_nearby_noise():
+    """A noise point far from all clusters must have higher p_far than one nearby."""
+    X = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, 1.0],
+            [1.0, 0.0],
+            [1.0, 1.0],  # cluster 0
+            [9.0, 9.0],
+            [9.0, 10.0],
+            [10.0, 9.0],
+            [10.0, 10.0],  # cluster 1
+            [0.6, 0.6],  # noise close to cluster 0
+            [50.0, 50.0],
+        ],  # noise far from everything
+        dtype=float,
+    )
+    labels = np.array([0, 0, 0, 0, 1, 1, 1, 1, -1, -1])
+    _, p_far = p_noise(X, labels)
+    # p_far index 0 = close noise, index 1 = far noise
+    assert p_far[1] > p_far[0]
+
+
+def test_p_noise_sparse_formula_with_precomputed():
     """
-    return np.mean(disco_samples(X, labels, min_points))
+    Verify the p_sparse formula manually for a controlled case.
 
-
-def disco_samples(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> np.ndarray:
-    """Compute the DISCO score for each sample.
-
-    The DISCO score is a measure of how well samples are clustered
-    with samples that are similar to themselves. Clustering models with a high
-    DISCO score are said to be dense, where samples in the same
-    cluster are similar to each other, and well separated, where samples in
-    different clusters are not very similar to each other.
-    Additionally, the DISCO score measures noise in relation to the given
-    clustering. If noise lays within a sparse region and is far away from
-    cluster regions it scores a high value, otherwise it will get a low value.
-
-    The DISCO score is calculated using the mean intra-cluster on the
-    dc-distance (``a``) and the mean nearest-cluster on the dc-distance (``b``)
-    for each non noise sample.  The DISCO score for a non noise sample is
-    ``(b - a) / max(a, b)``.
-    To clarify, ``b`` is the dc-distance between a non noise sample and the nearest
-    cluster that the sample is not a part of.
-    ``-1`` in labels are considered as noise and their DISCO score is calculated
-    by the minimum of the two different measures ``p_sparse`` and ``p_far``.
-    ``p_sparse`` measures how well the noise sample is within a sparse region.
-    ``p_far`` measure how well the noise is remote to non noise samples.
-    Note that DISCO score is defined for all possible number of labels
-    ``1 <= n_labels <= n_samples``.
-    Except for ``-1`` every other value is considered as cluster label.
-
-    This function returns the DISCO score for each sample.
-
-    The best value is 1 and the worst value is -1. Values near 0 indicate
-    overlapping clusters. Negative values generally indicate that a sample has
-    been assigned to the wrong cluster, as a different cluster is more similar.
-
-    Read more in the :ref:`User Guide <disco_score>`.
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix} of (n_samples_a, n_features)
-        A feature array.
-
-    labels : array-like of shape (n_samples,)
-        Label values for each sample.
-
-    min_points : int
-        ``min_points`` value to use for the dc-distance.
-
-
-    Returns
-    -------
-    disco_score : array-like of shape (n_samples,)
-        DISCO scores for each sample.
-
-    References
-    ----------
-
-    .. [1] `anonymous`_
-
-
-    Examples
-    --------
-    >>> from disco import disco_score
-    >>> from sklearn.datasets import make_moons
-    >>> from sklearn.cluster import HDBSCAN
-    >>> X, y = make_moons(random_state=42)
-    >>> hdbscan = HDBSCAN()
-    >>> labels = hdbscan.fit_predict(X).labels_
-    >>> disco_samples(X, labels)
-    array([...])
-
+    Layout: cluster 0 at origin, cluster 1 far away, one noise point
+    placed in a region sparser than both clusters so p_sparse > 0.
     """
-    if len(X) == 0:
-        raise ValueError("Can't calculate DISCO score for empty dataset.")
-    if len(X) != len(labels):
-        raise ValueError("Dataset size differs from label size.")
+    X = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, 0.5],
+            [0.5, 0.0],
+            [0.5, 0.5],  # cluster 0 (dense)
+            [9.0, 9.0],
+            [9.0, 9.5],
+            [9.5, 9.0],
+            [9.5, 9.5],  # cluster 1 (dense)
+            [5.0, 5.0],
+        ],  # noise (sparse midpoint)
+        dtype=float,
+    )
+    labels = np.array([0, 0, 0, 0, 1, 1, 1, 1, -1])
+    min_points = 3
 
-    # Labels needs to be a one dimensional vector
-    labels = np.reshape(labels, -1)
-    label_set = set(labels)
-
-    # Only noise
-    if label_set == {-1}:
-        return np.full(len(X), -1)
-
-    # One cluster without noise
-    if len(label_set) == 1 and label_set != {-1}:
-        return np.full(len(X), 0)
-
-    dc_dists = dc_distances(X, min_points=min_points)
-    # One cluster with noise
-    if len(label_set) == 2 and -1 in label_set:
-        l_ = labels.copy()
-        l_[l_ == -1] = np.arange(-1, -len(l_[l_ == -1]) - 1, -1)
-        disco_values = np.empty(len(X))
-        disco_values[labels != -1] = p_cluster(dc_dists, l_, precomputed_dc_dists=True)[labels != -1]
-        disco_values[labels == -1] = np.minimum(*p_noise(X, labels, min_points=min_points, dc_dists=dc_dists))
-        return disco_values
-
-    # More then one cluster with optional noise
-    else:
-        disco_values = np.empty(len(X))
-        non_noise_dc_dists = dc_dists[np.ix_(labels != -1, labels != -1)]
-        non_noise_labels = labels[labels != -1]
-        disco_values[labels != -1] = p_cluster(non_noise_dc_dists, non_noise_labels, precomputed_dc_dists=True)
-        disco_values[labels == -1] = np.minimum(*p_noise(X, labels, min_points=min_points, dc_dists=dc_dists))
-        return disco_values
-
-
-def p_cluster(
-    X: np.ndarray,
-    labels: np.ndarray,
-    *,
-    min_points: int = 5,
-    precomputed_dc_dists: bool = False,
-) -> np.ndarray:
-    """Compute p_cluster of all samples.
-
-    p_cluster is the Silhouette Coefficient over the dc-distance metric.
-    Contrary to the Silhouette Coefficient, it is definded for
-    ``1 <= n_labels <= n_samples``.
-
-    For ``n_labels == 1`` or `` ``n_labels == n_samples`` it will return
-    ``np.zeros(n_labels)``.
-
-    In this function, ``-1`` is NOT handled as noise, but as a valid cluster label!
-
-    The best value is 1 and the worst value is -1. Values near 0 indicate
-    overlapping clusters. Negative values generally indicate that a sample has
-    been assigned to the wrong cluster, as a different cluster is more similar.
-
-    Read more in the :ref:`User Guide <silhouette_coefficient>`.
-
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix} of (n_samples_a, n_features)
-        A feature array.
-
-    labels : array-like of shape (n_samples,)
-        Predicted labels for each sample.
-
-    min_points : int
-        ``min_points`` value to use for the dc-distance.
-
-    precomputed_dc_dists : bool
-        Use X as dc-distance matrix if True, else calculate dc-distance for data ``X``.
-
-
-    Returns
-    -------
-    p_cluster : array-like of shape (n_samples,)
-        p_cluster scores for each sample.
-
-
-    Examples
-    --------
-    >>> from disco import p_cluster
-    >>> from sklearn.datasets import make_moons
-    >>> from sklearn.cluster import HDBSCAN
-    >>> X, y = make_moons(random_state=42)
-    >>> hdbscan = HDBSCAN()
-    >>> labels = hdbscan.fit_predict(X).labels_
-    >>> p_cluster(X, labels)
-    array([...])
-
-    """
-    if len(X) != len(labels):
-        raise ValueError("Dataset size of `X` differs from label size of `lables`.")
-
-    if len(X) == 0:
-        return np.array([])
-
-    if len(X) == 1:
-        return np.array([0])
-
-    if 1 == len(set(labels)) or len(set(labels)) == len(X):
-        return np.zeros(len(X))
-
-    if precomputed_dc_dists:
-        if X.ndim != 2 or X.shape[0] != X.shape[1]:
-            raise ValueError("`X` needs to be a distance matrix if `precomputed_dc_dists` is `True`.")
-        dc_dists = X
-    else:
-        dc_dists = dc_distances(X, min_points=min_points)
-
-    return silhouette_samples(dc_dists, labels, metric="precomputed")
-
-
-def p_noise(
-    X: np.ndarray,
-    labels: np.ndarray,
-    *,
-    min_points: int = 5,
-    dc_dists: np.ndarray | None = None,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Compute (p_sparse, p_far) of all samples.
-
-    ``p_sparse`` calculates how well the noise sample lays within a sparse region.
-    ``p_far`` calulcates how well the noise is remote remote to a non noise sample.
-    To clarify, ``p_sparse`` and ``p_far`` are calculated depending on the existing
-    clustering. Changing the clustering without changing the noise samples can change
-    the values of ``p_sparse`` and ``p_far``.
-
-    In this function, ``-1`` is handled as noise. The return value consists of a
-    tuple with two arrays both of size ``n_noise``.
-
-    The best value is 1 and the worst value is -1 for both ``p_sparse`` and ``p_far``.
-    For ``p_sparse``, values near 0 indicate that the noise sample is within an area which
-    is as sparse as the sparsest existing cluster. Note that this value is calculated
-    depending on the sparsest cluster.  Negative values indicate that the noise sample has
-    been labeled as noise, although it lays within a very dense region.
-    For ``p_far``, values near 0 indicate that the noise sample lays at the border of
-    an existing cluster. Negative values generally indicate that a noise sample lays within
-    an existing cluster.
-
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix} of (n_samples_a, n_features)
-        A feature array.
-
-    labels : array-like of shape (n_samples,)
-        Predicted labels for each sample.
-
-    min_points : int
-        ``min_points`` value to use for the dc-distance.
-
-    dc_dists : array-like of shape (n_samples,)
-        Precalculated dc-distances. If not provided, dc-distances will be calculated for data ``X``.
-
-
-    Returns
-    -------
-    (p_sparse, p_far) : tuple of two array-like, both of shape (n_noise,)
-        (p_sparse, p_far) for each sample, returned in two seperate arrays.
-
-
-    Examples
-    --------
-    >>> from disco import p_noise
-    >>> from sklearn.datasets import make_moons
-    >>> from sklearn.cluster import HDBSCAN
-    >>> X, y = make_moons(random_state=42)
-    >>> hdbscan = HDBSCAN()
-    >>> labels = hdbscan.fit_predict(X).labels_
-    >>> p_noise(X, labels)
-    (array([...]), array([...]))
-
-    """
-    if len(X) == 0:
-        raise ValueError("Can't calculate noise score for empty dataset.")
-    if len(X) != len(labels):
-        raise ValueError("Dataset size differs from label size.")
-
-    label_set = set(labels)
-
-    # Only noise
-    if label_set == {-1}:
-        return np.full(len(X), -1), np.full(len(X), -1)
-
-    # No noise
-    if -1 not in label_set:
-        return np.array([]), np.array([])
-
-    ## At least one cluster and noise ##
-    if dc_dists is None:
-        dc_dists = dc_distances(X, min_points=min_points)
-
+    # Manual core distance computation
     tree = KDTree(X)
     core_dists, _ = tree.query(X, k=min_points)
     core_dists = core_dists.max(axis=1)
 
-    # Get maximum core distance per cluster
-    cluster_ids = set(labels[labels != -1])
-    max_core_dist = np.empty(len(cluster_ids))
-    for i, cluster_id in enumerate(cluster_ids):
-        max_core_dist[i] = core_dists[labels == cluster_id].max()
+    noise_core = core_dists[labels == -1]
+    max_core_cluster0 = core_dists[labels == 0].max()
+    max_core_cluster1 = core_dists[labels == 1].max()
 
-    # p_sparse calculation
-    p_sparse = np.full(len(labels[labels == -1]), np.inf)
-    for i in range(len(cluster_ids)):
-        numerator = core_dists[labels == -1] - max_core_dist[i]
-        denominator = np.maximum(core_dists[labels == -1], max_core_dist[i])
-        p_sparse_i = np.divide(
-            numerator,
-            denominator,
-            out=np.zeros_like(numerator),
-            where=denominator != 0,
-        )
-        p_sparse = np.minimum(p_sparse, p_sparse_i)
+    def p_sparse_formula(noise_cd, cluster_max_cd):
+        num = noise_cd - cluster_max_cd
+        den = np.maximum(noise_cd, cluster_max_cd)
+        return num / den if den != 0 else 0.0
 
-    # p_far calculation
-    p_far = np.full(len(labels[labels == -1]), np.inf)
-    for i, cluster_id in enumerate(cluster_ids):
-        min_dist_to_cluster_i = np.min(dc_dists[np.ix_(labels == -1, labels == cluster_id)], axis=1)
-        numerator = min_dist_to_cluster_i - max_core_dist[i]
-        denominator = np.maximum(min_dist_to_cluster_i, max_core_dist[i])
-        p_far_i = np.divide(
-            numerator,
-            denominator,
-            out=np.zeros_like(numerator),
-            where=denominator != 0,
-        )
-        p_far = np.minimum(p_far, p_far_i)
+    expected = min(
+        p_sparse_formula(noise_core[0], max_core_cluster0),
+        p_sparse_formula(noise_core[0], max_core_cluster1),
+    )
 
-    return p_sparse, p_far
-
-
-def dc_distances(X, min_points=5):
-    # ship = SHiP(data=X, treeType="DCTree", config={
-    #     "tiebreaker_method": "random",
-    #     "relaxed": False,
-    #     "min_points": min_points,
-    # })
-    # dc_dists = ship.get_tree(0).distance_matrix()
-    # np.fill_diagonal(dc_dists, 0)
-
-    dc_dists = DCTree(X, min_points=min_points, no_fastindex=True).dc_distances()
-    return dc_dists
+    p_sparse, _ = p_noise(X, labels, min_points=min_points)
+    assert p_sparse[0] == pytest.approx(expected, abs=1e-9)

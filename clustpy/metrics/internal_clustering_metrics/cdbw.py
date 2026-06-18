@@ -15,11 +15,12 @@
 
 import importlib
 import math
-from collections import defaultdict, Counter
-
 import numpy as np
+from collections import defaultdict, Counter
 from scipy.spatial import ConvexHull
 from scipy.spatial.distance import cdist
+from sklearn.preprocessing import LabelEncoder
+from clustpy.metrics._metrics_utils import _check_length_data_and_labels, handle_noise
 
 
 def gen_dist_func(metric):
@@ -29,10 +30,10 @@ def gen_dist_func(metric):
     Parameters
     ----------
     metric : str,
-        The distance metric, can be ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’, ‘correlation’,
-        ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’, ‘jaccard’, ‘kulsinski’, ‘mahalanobis’, ‘matching’, ‘minkowski’,
-        ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’, ‘sokalmichener’, ‘sokalsneath’, ‘sqeuclidean’, ‘wminkowski’,
-        ‘yule’.
+        The distance metric, can be 'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation',
+        'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis', 'matching', 'minkowski',
+        'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski',
+        'yule'.
 
     Returns
     -------
@@ -42,97 +43,6 @@ def gen_dist_func(metric):
     mod = importlib.import_module("scipy.spatial.distance")
     func = getattr(mod, metric)
     return func
-
-
-def filter_noise_lab(X, labels):
-    """
-    Filter noise points
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        List of n_features-dimensional data points. Each row corresponds
-        to a single data point.
-    labels : array-like, shape (n_samples,)
-        Predicted labels for each sample.  (-1 - for noise)
-
-    Returns
-    -------
-    filterLabel : array-like, shape (n_samples,)
-        Filtered predicted labels for each sample.
-    filterXYZ : array-like, shape (n_samples, n_features)
-        List of n_features-dimensional data points. Each row corresponds
-        to a single data point. Data points which label = -1 was removed.
-    """
-    filterLabel = labels[labels != -1]
-    filterXYZ = X[labels != -1]
-    return filterLabel, filterXYZ
-
-
-def bind_noise_lab(X, labels, metric):
-    """
-    Bind noise points to nearest cluster
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        List of n_features-dimensional data points. Each row corresponds
-        to a single data point.
-    labels : array-like, shape (n_samples,)
-        Predicted labels for each sample.  (-1 - for noise)
-    metric : str,
-        The distance metric, can be ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’, ‘correlation’,
-        ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’, ‘jaccard’, ‘kulsinski’, ‘mahalanobis’, ‘matching’, ‘minkowski’,
-        ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’, ‘sokalmichener’, ‘sokalsneath’, ‘sqeuclidean’, ‘wminkowski’,
-        ‘yule’. Default is ‘euclidean’.
-
-    Returns
-    -------
-    labels : array-like, shape (n_samples,)
-        Modified predicted labels for each sample. to a single data point.
-        Data points which label = -1 was bound to nearest clusters.
-    """
-
-    labels = labels.copy()
-    if -1 not in set(labels):
-        return labels
-    if len(set(labels)) == 1 and -1 in set(labels):
-        raise ValueError('Labels contains noise point only')
-    label_id = []
-    label_new = []
-    for i in range(len(labels)):
-        if labels[i] == -1:
-            point = np.array([X[i]])
-            dist = cdist(X[labels != -1], point, metric=metric)
-            lid = np.where(np.all(X == X[labels != -1][np.argmin(dist), :], axis=1))[0][0]
-            label_id.append(i)
-            label_new.append(labels[lid])
-    labels[np.array(label_id)] = np.array(label_new)
-    return labels
-
-
-def comb_noise_lab(labels):
-    """
-    Combining all noise points into one cluster
-
-    Parameters
-    ----------
-    labels : array-like, shape (n_samples,)
-        Predicted labels for each sample.  (-1 - for noise)
-
-    Returns
-    -------
-    labels : array-like, shape (n_samples,)
-        Modified predicted labels for each sample. to a single data point.
-        All data points which label = -1 was combined into a one cluster.
-    """
-    labels = labels.copy()
-    max_label = np.max(labels)
-    j = max_label + 1
-    for i in range(len(labels)):
-        if labels[i] == -1:
-            labels[i] = j
-    return labels
 
 
 def prep(X, labels):
@@ -262,13 +172,13 @@ def closest_rep(X, n_clusters, rep_in_cl, n_rep, metric, distvec):
     n_rep : array_like shape (n_clusters,)
         Number of representative points in each cluster.
     metric : str,
-        The distance metric, can be ‘braycurtis’, ‘canberra’, ‘chebyshev’,
-        ‘cityblock’, ‘correlation’,
-        ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’, ‘jaccard’, ‘kulsinski’,
-        ‘mahalanobis’, ‘matching’, ‘minkowski’,
-        ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’, ‘sokalmichener’,
-        ‘sokalsneath’, ‘sqeuclidean’, ‘wminkowski’,
-        ‘yule’.
+        The distance metric, can be 'braycurtis', 'canberra', 'chebyshev',
+        'cityblock', 'correlation',
+        'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski',
+        'mahalanobis', 'matching', 'minkowski',
+        'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
+        'sokalsneath', 'sqeuclidean', 'wminkowski',
+        'yule'.
     distvec : function (array_like, array_like)
         Function for calculation distance between two points in n-dimensional
         space.
@@ -538,7 +448,7 @@ def separation(n_clusters, stdev, middle_point, dist_min, n_cl_rep, n_points_in_
     return sep
 
 
-def cdbw_score(X, labels, metric="euclidean", alg_noise='filter', intra_dens_inf=False, s=10, multipliers=False):
+def cdbw_score(X, labels, metric="euclidean", noise_strategy="filter", intra_dens_inf=False, s=10, multipliers=False):
     """
     Calculate CDbw-index for cluster validation, as defined in [1]
 
@@ -552,15 +462,16 @@ def cdbw_score(X, labels, metric="euclidean", alg_noise='filter', intra_dens_inf
     labels : array-like, shape (n_samples,)
         Predicted labels for each sample.  (-1 - for noise)
     metric : str,
-        The distance metric, can be ‘braycurtis’, ‘canberra’, ‘chebyshev’, ‘cityblock’, ‘correlation’,
-        ‘cosine’, ‘dice’, ‘euclidean’, ‘hamming’, ‘jaccard’, ‘kulsinski’, ‘mahalanobis’, ‘matching’, ‘minkowski’,
-        ‘rogerstanimoto’, ‘russellrao’, ‘seuclidean’, ‘sokalmichener’, ‘sokalsneath’, ‘sqeuclidean’, ‘wminkowski’,
-        ‘yule’.
-    alg_noise : str,
-        Algorithm for recording noise points.
-        'comb' - combining all noise points into one cluster (default)
-        'bind' -  binding of each noise point to the cluster nearest from it
-        'filter' - filtering noise points
+        The distance metric, can be 'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation',
+        'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis', 'matching', 'minkowski',
+        'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'wminkowski',
+        'yule'.
+    noise_strategy : str
+        Strategy for handling noise. Must be one of:
+        - "as_one_cluster"     : Assign all noise points to a single new cluster.
+        - "as_singletons"      : Assign each noise point to its own cluster.
+        - "filter"             : Remove all noise points (default).
+        - "to_nearest_cluster" : Assign each noise point to nearest cluster.
     intra_dens_inf : bool,
         If False (default) CDbw index = 0 for cohesion or compactness - inf or nan.
     s : int,
@@ -575,30 +486,19 @@ def cdbw_score(X, labels, metric="euclidean", alg_noise='filter', intra_dens_inf
 
     References:
     -----------
-    .. [1] M. Halkidi and M. Vazirgiannis, “A density-based cluster validity approach using multi-representatives”
-        Pattern Recognition Letters 29 (2008) 773–786.
+    .. [1] M. Halkidi and M. Vazirgiannis, "A density-based cluster validity approach using multi-representatives"
+        Pattern Recognition Letters 29 (2008) 773-786.
 
     """
-    if len(set(labels)) < 2 or len(set(labels)) > len(X) - 1:
-        raise ValueError("No. of unique labels must be > 1 and < n_samples")
     if s < 2:
         raise ValueError("Parameter s must be > 2")
-    elif alg_noise == 'bind':
-        labels = bind_noise_lab(X, labels, metric=metric)
-    elif alg_noise == 'comb':
-        labels = comb_noise_lab(labels)
-    elif alg_noise == 'filter':
-        labels, X = filter_noise_lab(X, labels)
-    unique_labels = np.unique(labels)
-    # move labels to start by 0 ignoring -1 (e.g. -1,1,3,5 -> -1,0,1,2)
-    for i, lab in enumerate(unique_labels):
-        if lab == -1:
-            continue
-        labels[labels == lab] = i
-    # move labels to start by 0 including -1 (e.g. -1,0,1,2 -> 0,1,2,3)
-    if -1 in np.unique(labels):
-        for lab in reversed(list(np.unique(labels))):
-            labels[labels == lab] = lab+1
+
+    assert noise_strategy != "keep", "CDbw score is not defined for noise points."
+    labels, X = handle_noise(labels, strategy=noise_strategy, X=X)
+    labels = LabelEncoder().fit_transform(labels)
+    X, labels = _check_length_data_and_labels(X, labels)
+    assert isinstance(labels, np.ndarray), "labels must be of type np.ndarray. Your input has type {0}".format(type(labels))
+
     labels = np.asarray(labels)
     distvec = gen_dist_func(metric)
     n_clusters, stdev, dimension, n_points_in_cl, n_max, coord_in_cl, labels_in_cl = prep(X, labels)

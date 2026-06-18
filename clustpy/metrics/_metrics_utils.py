@@ -268,8 +268,7 @@ def handle_noise(
     strategy = strategy.lower()
 
     if strategy == "keep":
-        new_labels = labels
-        return (new_labels, X) if X is not None else new_labels
+        return (labels, X) if X is not None else labels
 
     elif strategy == "as_one_cluster":
         new_labels = _assign_all_noise_points_to_one_cluster(labels)

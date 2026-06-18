@@ -6,11 +6,8 @@ from .dcsi import dcsi_score
 from .disco import disco_score, disco_samples, p_noise as disco_noise_samples
 from .dsi import dsi_score
 from .lccv import lccv_score
-from .s_dbw import sdbw_score
+from .s_dbw import s_dbw_score
 from .viasckde import viasckde_score
-
-from sklearn.metrics import silhouette_score, silhouette_samples
-
 
 __all__ = [
     "cdbw_score",
@@ -23,9 +20,6 @@ __all__ = [
     "disco_noise_samples",
     "dsi_score",
     "lccv_score",
-    "sdbw_score",
+    "s_dbw_score",
     "viasckde_score",
-    # from sklearn
-    "silhouette_score",
-    "silhouette_samples",
 ]

@@ -26,6 +26,8 @@ class DCTree:
         points, of which the dc_distances should be computed of.
     min_points : int, optional
         min_points parameter used for the computation of the dc_distances (default: 5).
+    precomputed : bool (default: false)
+        Use X as precomputed reachability distance matrix.
 
     Functions
     ---------
@@ -56,10 +58,13 @@ class DCTree:
         self,
         X: np.ndarray,
         min_points: int = 5,
+        precomputed=False,
     ):
         self.n = X.shape[0]
+        assert self.n > 1, "X needs at least two entries."
         self.min_points = min_points
-        X = reachability_distances(X, min_points)
+        if not precomputed:
+            X = reachability_distances(X, min_points)
         mst_edges = minimum_spanning_tree_prims(X)
         self.root = self._build_tree(mst_edges)
         self._init_fast_index()
@@ -295,7 +300,6 @@ class DCTree:
             # Mirror values
             dc_dists = dc_dists + dc_dists.T
         return dc_dists
-
 
     def _traverse_until_k_clusters(self, n_clusters: int) -> List[_DCNode]:
         """

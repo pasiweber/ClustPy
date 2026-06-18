@@ -1,79 +1,39 @@
-# Implementation of CVNN by
-# - Author: Jana Gauss - Github user `JanaGauss`
-# - Source: https://github.com/JanaGauss/dcsi/blob/main/code/functions/separability_functions.R
-# - License: -
-
-# Paper: Understanding and Enhancement of Internal Clustering Validation Measures
-# Authors: Yanchi Liu, Zhongmou Li, Hui Xiong, Xuedong Gao, Junjie Wu, and Sen Wu
-# Link: https://ieeexplore.ieee.org/document/6341117
-
-# Our modifications:
-#    (1) translated from R to python
-
-
 import numpy as np
-from sklearn.metrics import euclidean_distances
-from sklearn.neighbors import kneighbors_graph
+from clustpy.metrics import cvnn_score
 
 
-def cvnn_score(data, labels, k=5):
-    """
-    WE WANT THE ORIGINAL VERSION therefore we exclude the modifications (can be found in the comments)
-    Function to calculate (a modified version of) CVNN
-
-    Calculates CVNN
-    (with some modifications, originally from Understanding and Enhancement of Internal Clustering Validation Measures, Liu et al.)
-    Modifications:
-    1. to calculate the overall Compactness, the mean is used instead of the sum of intra-cluster compactness-values
-    2. Compactness is divided by the mean distance of points, so that CVNN can be compared between different data sets
-
-    Args:
-        dist (numpy.ndarray): a distance matrix
-        labels (numpy.ndarray): a vector with labels
-        k (int): number of nearest neighbors
-
-    Returns:
-        float: CVNN score
-    """
-    # what kind of distance measure?
-    dist = euclidean_distances(data, data)
-    dist = np.array(dist)
-
-    # calculate separation and compactness for every class
-    Sep_list = []
-    Comp_list = []
-
-    ### R-Code
-    #knn_graph <- cccd::nng(dx = dist, k = k)
-    #knn_matrix <- as.matrix(igraph::as_adjacency_matrix(knn_graph))
-    knn_graph = kneighbors_graph(data, k, mode='distance')
-    knn_matrix = knn_graph.toarray()
-
-    for i in np.unique(labels):
-        # add this to ensure that noise is not seen as a separate cluster
-        if i != -1:
-            ind_i = np.where(labels == i)[0]
-
-            # Separation: proportion of k-NN of objects in i that don't belong to i
-            knn_i = knn_matrix[ind_i, :][:, ind_i]
-            sep_i = np.sum(knn_i) / (len(ind_i) * k)
-            Sep_list.append(sep_i)
-
-            # Compactness: average pairwise distance between objects in same cluster
-            dist_i = dist[np.ix_(ind_i, ind_i)]
-            comp_i = np.sum(dist_i[np.triu_indices(len(ind_i), 1)])
-            # comp_i = np.mean(dist_i[np.triu_indices(len(ind_i), 1)])
-            Comp_list.append(comp_i)
-
-    # calculate CVNN
-    # Modification for compactness: mean instead of sum, normalize by mean distance so that CVNN of different data can be compared
-    dist[np.diag_indices_from(dist)] = np.nan
-
-    #Comp = np.mean(Comp_list) / np.nanmean(dist)
-    Comp = np.sum(Comp_list)
-    Sep = np.max(Sep_list)
-
-    cvnn_value = Comp + Sep
-
-    # return result
-    return cvnn_value
+def test_cvnn_score():
+    X = np.array([[0, 0], [0, 1], [1, 0], [1, 1], [5, 5], [4, 5], [5, 4], [4, 4]])
+    L1 = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+    L2 = np.array([0, 0, 1, 1, 1, 1, 1, 1])
+    L3 = np.array([0, 0, 1, 1, 1, 1, 0, 0])
+    cvnn_1 = cvnn_score(X, L1, n_neighbors=3)
+    expected_seperation_1 = 0
+    expected_compactness_1 = (1 + 1 + np.sqrt(2) + np.sqrt(2) + 1 + 1) / 6 * 2
+    assert cvnn_1 == expected_seperation_1 + expected_compactness_1
+    # Check different n_neighbors
+    cvnn_2 = cvnn_score(X, L1, n_neighbors=4)
+    expected_seperation_2 = 1 / 4
+    expected_compactness_2 = (1 + 1 + np.sqrt(2) + np.sqrt(2) + 1 + 1) / 6 * 2
+    assert cvnn_2 == expected_seperation_2 + expected_compactness_2
+    # Check different metric
+    cvnn_3 = cvnn_score(X, L1, n_neighbors=4, metric="sqeuclidean")
+    expected_seperation_3 = 1 / 4
+    expected_compactness_3 = (1 + 1 + 2 + 2 + 1 + 1) / 6 * 2
+    assert cvnn_3 == expected_seperation_3 + expected_compactness_3
+    # Check L2
+    cvnn_4 = cvnn_score(X, L2, n_neighbors=3)
+    expected_seperation_4 = 2 / 3
+    expected_compactness_4 = (1 + 1) / 2 + (1 + np.sqrt(41) + np.sqrt(34) + np.sqrt(32) + np.sqrt(25) + np.sqrt(32) + np.sqrt(25) + np.sqrt(25) + np.sqrt(18) + 1 + 1 + np.sqrt(2) + np.sqrt(2) + 1 + 1) / 15
+    assert cvnn_4 == expected_seperation_4 + expected_compactness_4
+    # Check L3
+    cvnn_5 = cvnn_score(X, L3, n_neighbors=3)
+    expected_seperation_5 = 2 / 3
+    expected_compactness_5 = (1 + np.sqrt(41) + np.sqrt(32) + np.sqrt(34) + np.sqrt(25) + 1) / 6 + (1 + np.sqrt(41) + np.sqrt(34) + np.sqrt(32) + np.sqrt(25) + 1) / 6
+    assert cvnn_5 == expected_seperation_5 + expected_compactness_5
+    # Check all labels
+    cvnn_6 = cvnn_score(X, [L1, L2, L3], n_neighbors=3)
+    expected_seperation_6 = np.array([expected_seperation_1, expected_seperation_4, expected_seperation_5])
+    expected_compactness_6 = np.array([expected_compactness_1, expected_compactness_4, expected_compactness_5])
+    assert np.array_equal(cvnn_6, expected_seperation_6 / expected_seperation_5 + expected_compactness_6 / expected_compactness_5)
+    assert cvnn_6[-1] == 2.

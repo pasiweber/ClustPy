@@ -12,32 +12,51 @@
 
 
 import numpy as np
-from scipy.spatial.distance import pdist, squareform
-from scipy.spatial.distance import cdist
+from scipy.spatial.distance import pdist, squareform, cdist
 from scipy.sparse.csgraph import minimum_spanning_tree
+from sklearn.preprocessing import LabelEncoder
+from clustpy.metrics._metrics_utils import _check_length_data_and_labels, handle_noise
 
 
-def dcsi_score(data, partition, min_pts=5):
-    clusters = partition
-    #for i in range(len(clusters)):
-    #    if np.sum(partition == clusters[i]) == 1:
-    #        partition[partition == clusters[i]] = -1
-    #        clusters[i] = -1
-    # all clusters except for -1
-    clusters = np.setdiff1d(clusters, -1)
-    # if no clusters left or just one cluster left return 0
-    #if len(clusters) == 0 or len(clusters) == 1:
-    #    return 0
-    # exclude noise points from dataset
-    data = data[partition != -1, :]
-    # calculate squared euclidean distance
-    dist = squareform(pdist(data)) ** 2
+def dcsi_score(X, labels, min_points=5, noise_strategy="filter"):
+    """
+    Calculate DCSI-index for cluster validation, as defined in [1]
 
-    # original labelling
-    poriginal = partition
-    # exclude noise points from labeling
-    partition = partition[partition != -1]
-    cluster_labels = np.unique(partition)
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        List of n_features-dimensional data points. Each row corresponds
+        to a single data point.
+    labels : array-like, shape (n_samples,)
+        Predicted labels for each sample.  (-1 - for noise)
+    min_points : int
+        min_points value to use.
+    noise_strategy : str
+        Strategy for handling noise. Must be one of:
+        - "as_one_cluster"     : Assign all noise points to a single new cluster.
+        - "as_singletons"      : Assign each noise point to its own cluster.
+        - "filter"             : Remove all noise points (default).
+        - "to_nearest_cluster" : Assign each noise point to nearest cluster.
+
+    Returns
+    -------
+    dcsi : float,
+        The resulting DCSI validity index.
+
+    References:
+    -----------
+    .. [1] DCSI -- An improved measure of cluster separability based on separation and connectedness
+           by Jana Gauss, Fabian Scheipl, and Moritz Herrmann
+           see https://arxiv.org/abs/2310.12806
+    """
+    assert noise_strategy != "keep", "DCSI score is not defined for noise points."
+    labels, X = handle_noise(labels, strategy=noise_strategy, X=X)
+    labels = LabelEncoder().fit_transform(labels)
+    X, labels = _check_length_data_and_labels(X, labels)
+    assert isinstance(labels, np.ndarray), "labels must be of type np.ndarray. Your input has type {0}".format(type(labels))
+
+    dist = squareform(pdist(X)) ** 2
+    cluster_labels = np.unique(labels)
     n_clusters = len(cluster_labels)
     dcsi = 0
     MST = {}
@@ -45,11 +64,11 @@ def dcsi_score(data, partition, min_pts=5):
     core_labels = []
     for i in range(0, n_clusters):
         # indices of objects in cluster i
-        objects_cl = np.where(partition == cluster_labels[i])[0]
+        objects_cl = np.where(labels == cluster_labels[i])[0]
         # distance in the cluster
         dist_i = dist[np.ix_(objects_cl, objects_cl)]
-        epsilon = calculate_epsilon(dist_i, 2 * min_pts)
-        CORE_PTS[cluster_labels[i]] = core_points(dist_i, epsilon, min_pts)
+        epsilon = calculate_epsilon(dist_i, 2 * min_points)
+        CORE_PTS[cluster_labels[i]] = core_points(dist_i, epsilon, min_points)
         # the official implementation only looks at core points (line 249 official git for i in unique(labels_core))
         if len(CORE_PTS[cluster_labels[i]]) == 0:
             continue
@@ -61,7 +80,7 @@ def dcsi_score(data, partition, min_pts=5):
         if i in core_labels:
             for j in range(i + 1, n_clusters):
                 if j in core_labels:
-                    part = pairwise_dcsi(MST, CORE_PTS, data, partition, cluster_labels[i], cluster_labels[j])
+                    part = pairwise_dcsi(MST, CORE_PTS, X, labels, cluster_labels[i], cluster_labels[j])
 
                     dcsi = dcsi + part
     dcsi = (2 / (n_clusters * (n_clusters - 1))) * dcsi
@@ -143,92 +162,3 @@ def minimal_spanning_tree(dist_i):
     # mst is upper triangular matrix, make it symmetric
     mst_temp = mst + mst.T
     return mst_temp
-
-
-"""#' Function to calculate self developed "density cluster separability index" (DCSI)
-#' 
-#' eps = median distance to minPts*2-th neighbor for each class
-#' @param dist a distance matrix
-#' @param labels a vector with labels
-#' @param minPts minPts argument for core point definition
-calc_DCSI <- function(dist, labels, minPts = 5){
-
-  dist <- as.matrix(dist)
-
-  # compute core points: 
-  # calculate eps for each class = median distance to minPts*2-th nearest neighbor
-  # calculate distance to minPts-th nearest neighbor among points of same class
-  ind_corePoints <- c()
-  for(i in unique(labels)){
-
-    ind_i <- which(labels == i) 
-
-    dist_i <- dist[ind_i, ind_i]
-
-    knn_graph_eps_i <- cccd::nng(dx = dist_i, k = minPts*2)
-    knn_matrix_eps_i <- as.matrix(igraph::as_adjacency_matrix(knn_graph_eps_i))
-    knn_weights_eps_i <- matrixcalc::hadamard.prod(knn_matrix_eps_i, dist_i) # add distances to knn-graph
-
-    dist_kth_neighbor_eps_i <- apply(knn_weights_eps_i, 1, max) # maximum value of every row = distance to minPts*2-th neighbor
-    eps_i <- median(dist_kth_neighbor_eps_i)
-
-
-    # calculate core points
-    knn_graph_i <- cccd::nng(dx = dist_i, k = minPts)
-    knn_matrix_i <- as.matrix(igraph::as_adjacency_matrix(knn_graph_i))
-    knn_weights_i <- matrixcalc::hadamard.prod(knn_matrix_i, dist_i) # add distances to knn-graph
-
-    dist_kth_neighbor_i <- apply(knn_weights_i, 1, max)
-
-    ind_corePoints_i <- which(dist_kth_neighbor_i <= eps_i)
-
-    ind_corePoints <- c(ind_corePoints, ind_i[ind_corePoints_i])
-
-  }
-
-  # from now on, consider only core points
-  dist_core <- dist[ind_corePoints, ind_corePoints]
-  labels_core <- labels[ind_corePoints]
-
-  # for each cluster i: 
-  # separation = minimum distance between a core point of i and a core point that is not in i
-  # connectedness = maximum distance in a MST built of the core points of cluster i
-  Sep_list <- list()
-  Conn_list <- list()
-
-  for(i in unique(labels_core)){
-    
-    ind_i <- which(labels_core == i) 
-    
-    dist_i <- dist_core[ind_i, -ind_i]
-    sep_i <- min(dist_i)
-    
-    
-    Sep_list <- append(Sep_list, sep_i)
-    
-    
-    # Connectedness: maximum distance in a MST built of the core points of cluster i
-    conn_i <- max(pegas::mst(dist_core[ind_i, ind_i])[, 3])
-    
-    
-    
-    Conn_list <- append(Conn_list, list(conn_i))
-    
-  }
-  
-  Sep <- min(unlist(Sep_list)) # the higher the better
-  Conn <- max(unlist(Conn_list)) # the smaller the better
-  # consider ratio Sep/Conn -> the higher the better
-  # values should be in [0,1] with 1 = highest value
-  DCSI <- (Sep/Conn)/(1+Sep/Conn) # = 1/(1+Conn/Sep)
-  
-  result <- list("DCSI" = DCSI, "Sep_DCSI" = Sep, "Conn_DCSI" = Conn)
-  
-  # return result
-  return(result)
-  
-}
-
-
-
-  """
