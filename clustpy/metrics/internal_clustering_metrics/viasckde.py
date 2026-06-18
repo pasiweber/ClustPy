@@ -61,9 +61,9 @@ def viasckde_score(X: np.ndarray, labels: np.ndarray, krnl: str = "gaussian", b_
         (default: 0.05).
     noise_strategy : str
         Strategy for handling noise. Must be one of:
-        - "as_one_cluster"     : Assign all noise points to a single new cluster (default).
+        - "as_one_cluster"     : Assign all noise points to a single new cluster.
         - "as_singletons"      : Assign each noise point to its own cluster.
-        - "filter"             : Remove all noise points.
+        - "filter"             : Remove all noise points (default).
         - "to_nearest_cluster" : Assign each noise point to nearest cluster.
 
     Returns

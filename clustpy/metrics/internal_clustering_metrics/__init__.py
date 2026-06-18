@@ -6,7 +6,7 @@ from .dcsi import dcsi_score
 from .disco import disco_score, disco_samples, p_noise as disco_noise_samples
 from .dsi import dsi_score
 from .lccv import lccv_score
-from .s_dbw import s_dbw_score
+from .s_dbw import s_dbw_score, sd_score
 from .viasckde import viasckde_score
 
 __all__ = [
@@ -21,5 +21,6 @@ __all__ = [
     "dsi_score",
     "lccv_score",
     "s_dbw_score",
+    "sd_score",
     "viasckde_score",
 ]

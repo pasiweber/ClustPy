@@ -402,7 +402,7 @@ def s_dbw_score(
     return sdbw
 
 
-def SD(X, labels, k=1.0, centers_id=None, alg_noise='comb', centr='mean', nearest_centr=True, metric='euclidean'):
+def sd_score(X, labels, k=1.0, centers_id=None, noise_strategy="filter", centr='mean', nearest_centr=True, metric='euclidean'):
     """
     Compute the SD validity index
     SD validity index is defined by equation:
@@ -423,12 +423,12 @@ def SD(X, labels, k=1.0, centers_id=None, alg_noise='comb', centr='mean', neares
          with vary number of clusters because distances(C) depends on number of clusters.
     centers_id : array-like, shape (n_samples,)
         The center_id of each cluster's center. If None - cluster's center calculate automatically.
-    alg_noise : str,
-        Algorithm for recording noise points.
-        'comb' - combining all noise points into one cluster (default)
-        'sep' - definition of each noise point as a separate cluster
-        'bind' -  binding of each noise point to the cluster nearest from it
-        'filter' - filtering noise points
+    noise_strategy : str
+        Strategy for handling noise. Must be one of:
+        - "as_one_cluster"     : Assign all noise points to a single new cluster.
+        - "as_singletons"      : Assign each noise point to its own cluster.
+        - "filter"             : Remove all noise points (default).
+        - "to_nearest_cluster" : Assign each noise point to nearest cluster.
     centr : str,
         cluster center calculation method (mean (default) or median)
     nearest_centr : bool,
@@ -450,19 +450,13 @@ def SD(X, labels, k=1.0, centers_id=None, alg_noise='comb', centr='mean', neares
     Quality Scheme Assessment in the Clustering Process. LNCS (LNAI). 1910. 265-276.
     """
 
-    if len(set(labels)) < 2 or len(set(labels)) > len(X) - 1:
-        raise ValueError("No. of unique labels must be > 1 and < n_samples")
-    if alg_noise == 'sep':
-        labels = sep_noise_lab(labels)
-    elif alg_noise == 'bind':
-        labels = bind_noise_lab(X, labels, metric=metric)
-    elif alg_noise == 'comb':
-        labels = comb_noise_lab(labels)
-    elif alg_noise == 'filter':
-        labels, X = filter_noise_lab(X, labels)
+    assert noise_strategy != "keep", "DSI score is not defined for noise points."
+    labels, X = handle_noise(labels, strategy=noise_strategy, X=X)
+    labels = LabelEncoder().fit_transform(labels)
+    X, labels = _check_length_data_and_labels(X, labels)
+    assert isinstance(labels, np.ndarray), "labels must be of type np.ndarray. Your input has type {0}".format(type(labels))
+
     unique_labels = np.unique(labels)
-    if np.size(unique_labels) < 2:
-        raise ValueError('Only one cluster!')
     if centers_id:
         centroids = dict()
         for index, label in enumerate(unique_labels):

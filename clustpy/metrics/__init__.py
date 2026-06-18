@@ -17,6 +17,7 @@ from .internal_clustering_metrics import (
     dsi_score,
     lccv_score,
     s_dbw_score,
+    sd_score,
     viasckde_score,
 )
 from .pair_counting_scores import (
@@ -60,6 +61,7 @@ __all__ = [
     "dsi_score",
     "lccv_score",
     "s_dbw_score",
+    "sd_score",
     "viasckde_score",
     # pair_counting_scores
     "PairCountingScores",
