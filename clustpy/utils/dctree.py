@@ -548,7 +548,6 @@ def minimum_spanning_tree_prims(matrix: np.ndarray) -> np.ndarray:
     mst_edges : np.ndarray
         The edges of the Minimum-spanning-tree, represented as a (n-1, 3) matrix with entries corresponding to (node_i, node_j, dist_ij)
     """
-    assert (matrix.shape[0] == matrix.shape[1]), "Input matrix must be quadratic."
     n = matrix.shape[0]
     nodes_min_dist = np.full(n, np.inf)
     parent = np.zeros(n, dtype=int)
