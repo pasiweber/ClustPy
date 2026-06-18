@@ -134,6 +134,14 @@ def test_reachability_distances():
 
 
 def test_minimum_spanning_tree_prims():
+    X = np.array([
+            [0.0, 0.0],
+            [-3.0, 0.0],
+            [2.0, 0.0],
+            [3.0, 0.0],
+            [-7.0, 0.0],
+            [-8.0, 0.]
+        ])
     distance_matrix = np.array([
             [0.0, 3.0, 2.0, 3.0, 7.0, 8.0],
             [3.0, 0.0, 5.0, 6.0, 4.0, 5.0],
@@ -144,18 +152,4 @@ def test_minimum_spanning_tree_prims():
         ])
     mst = minimum_spanning_tree_prims(distance_matrix)
     expected_mst = np.array([(0, 2, 2.0), (2, 3, 1.0), (0, 1, 3.0), (1, 4, 4.0), (4, 5, 1.0)], dtype=([("i", int), ("j", int), ("dist", float)]))
-    X = np.array([
-            [0.0, 0.0],
-            [-3.0, 0.0],
-            [2.0, 0.0],
-            [3.0, 0.0],
-            [-7.0, 0.0],
-            [-8.0, 0.]
-        ])
-    mst = minimum_spanning_tree_prims(X)
-    assert np.array_equal(mst, expected_mst)
-    # Test reachability distance
-    core_distances = [3, 4, 2, 3, 7]
-    mst = minimum_spanning_tree_prims(X)
-    expected_mst = np.array([(0, 2, 3.0), (0, 3, 3.0), (0, 1, 4.0), (1, 4, 4.0), (1, 5, 5.0)], dtype=([("i", int), ("j", int), ("dist", float)]))
     assert np.array_equal(mst, expected_mst)
