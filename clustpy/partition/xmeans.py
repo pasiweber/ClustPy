@@ -352,7 +352,10 @@ def _clustering_score(n_points: int, cluster_sizes: np.ndarray, n_dims: int, ine
     else:
         cost_free_params = n_free_params
     # Score of Loglikelihood
-    variance = inertia / (n_points - n_clusters)
+    if inertia == 0 or n_points <= n_clusters:
+        variance = 1e-5
+    else:
+        variance = inertia / (n_points - n_clusters)
     if split_criterion.endswith("original"):
         # BIC of the data using the loglikelihood as porposed in the original paper
         score_loglikelihood = np.sum(cluster_sizes * np.log(cluster_sizes)) - n_points * (np.log(n_points) + np.log(

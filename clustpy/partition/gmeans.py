@@ -64,7 +64,9 @@ def _gmeans(X: np.ndarray, significance: float, n_clusters_init: int, max_n_clus
                                                              np.array([centers[c]]), n_split_trials, random_state)
             # Project data form cluster onto resulting connection axis
             projection_vector = centers_split[0] - centers_split[1]
-            projection_vector /= np.linalg.norm(projection_vector)
+            vector_norm = np.linalg.norm(projection_vector)
+            if vector_norm != 0:
+                projection_vector /= vector_norm
             projected_data = np.dot(X[ids_in_cluster], projection_vector)
             # Use Anderson Darling to test if data is Gaussian (method includes standardization)
             ad_result = anderson(projected_data, "norm", method="interpolate")

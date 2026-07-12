@@ -94,7 +94,7 @@ def gap_statistic_score(X: np.ndarray, labels: np.ndarray, n_clusters: int | Non
         mins, maxs, pca = _get_data_min_max(X, use_principal_components)
         # Create bootstrapped data
         bootstrapped_data = [_generate_random_data(X.shape, mins, maxs, pca, random_state) for _ in range(n_boots)]
-    assert len(bootstrapped_data) == n_boots, f"len(bootstrapped_data) must be equal to n_boolts. Your values: {len(bootstrapped_data)} vs {n_boots}"
+    assert len(bootstrapped_data) == n_boots, f"len(bootstrapped_data) must be equal to n_boots. Your values: {len(bootstrapped_data)} vs {n_boots}"
     # Get within-cluster disperion for the input data
     W_k = _get_within_cluster_dispersion(X, labels, cluster_centers, inertia, use_log, weighted)
     # Get within-dispersion measures
@@ -227,7 +227,7 @@ def _get_data_min_max(X: np.ndarray, use_principal_components: bool) -> tuple[np
         The min values, max values and the pca object (can be None)
     """
     # Get min and max values for each dimension
-    if use_principal_components:
+    if use_principal_components and X.shape[0] >= X.shape[1]:
         pca = PCA(n_components=X.shape[1])
         X_transformed = pca.fit_transform(X)
     else:
