@@ -18,7 +18,8 @@ dependencies = [
     "torch",
     "pandas",
     "tqdm",
-    "torchvision"
+    "torchvision",
+    "SHiP-framework==0.15",
 ]
 
 [project.optional-dependencies]
