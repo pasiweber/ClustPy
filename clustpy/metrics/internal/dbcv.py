@@ -91,7 +91,7 @@ def dbcv_score(
     Link: https://epubs.siam.org/doi/abs/10.1137/1.9781611973440.96
     """
 
-    labels, X = handle_noise(labels, strategy=noise_strategy, X=X)
+    labels, X, _ = handle_noise(labels, strategy=noise_strategy, X=X)
     labels[labels != -1] = LabelEncoder().fit_transform(labels[labels != -1])
     X, labels = _check_length_data_and_labels(X, labels)
     assert isinstance(labels, np.ndarray), "labels must be of type np.ndarray. Your input has type {0}".format(
