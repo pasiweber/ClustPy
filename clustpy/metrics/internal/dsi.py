@@ -48,7 +48,6 @@ def dsi_score(X, labels, noise_strategy="filter"):  # KS test on ICD and BCD
         Predicted labels for each sample.  (-1 - for noise)
     noise_strategy : str
         Strategy for handling noise (see clustpy.metrics.handle_noise). Must be one of:
-        - "keep"            : Keep all noise points as they are (default).
         - "one_cluster"     : Assign all noise points to a single new cluster.
         - "singletons"      : Assign each noise point to its own cluster.
         - "filter"          : Remove all noise points.
