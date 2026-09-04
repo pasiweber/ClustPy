@@ -4,6 +4,7 @@ import numpy as np
 from clustpy.data._utils import _get_download_dir, _load_image_data, flatten_images
 from sklearn.datasets._base import Bunch
 from pathlib import Path
+from ._cache import cache_dataset
 
 
 """
@@ -146,6 +147,7 @@ Actual datasets
 """
 
 
+@cache_dataset
 def load_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the MNIST data set. It consists of 70000 28x28 grayscale images showing handwritten digits (0 to 9).
@@ -182,6 +184,7 @@ def load_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: st
     return _load_torch_image_data(torchvision.datasets.MNIST, subset, True, "HW", return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_kmnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the Kuzushiji-MNIST data set. It consists of 70000 28x28 grayscale images showing Kanji characters.
@@ -219,6 +222,7 @@ def load_kmnist(subset: str = "all", return_X_y: bool = False, downloads_path: s
     return _load_torch_image_data(torchvision.datasets.KMNIST, subset, True, "HW", return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_fmnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the Fashion-MNIST data set. It consists of 70000 28x28 grayscale images showing articles from the Zalando online store.
@@ -256,6 +260,7 @@ def load_fmnist(subset: str = "all", return_X_y: bool = False, downloads_path: s
     return _load_torch_image_data(torchvision.datasets.FashionMNIST, subset, True, "HW", return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_usps(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the USPS data set. It consists of 9298 16x16 grayscale images showing handwritten digits (0 to 9).
@@ -292,6 +297,7 @@ def load_usps(subset: str = "all", return_X_y: bool = False, downloads_path: str
     return _load_torch_image_data(torchvision.datasets.USPS, subset, True, "HW", return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_cifar10(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the CIFAR10 data set. It consists of 60000 32x32 color images showing different objects.
@@ -328,6 +334,7 @@ def load_cifar10(subset: str = "all", return_X_y: bool = False, downloads_path: 
     return _load_torch_image_data(torchvision.datasets.CIFAR10, subset, True, "HWC", return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_cifar100(subset: str = "all", use_superclasses: bool = False, return_X_y: bool = False,
                   downloads_path: str | Path = None) -> Bunch:
     """
@@ -397,6 +404,7 @@ def load_cifar100(subset: str = "all", use_superclasses: bool = False, return_X_
         return dataset
 
 
+@cache_dataset
 def load_svhn(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the SVHN data set. It consists of 99289 32x32 color images showing house numbers (0 to 9).
@@ -432,6 +440,7 @@ def load_svhn(subset: str = "all", return_X_y: bool = False, downloads_path: str
     return _load_torch_image_data(torchvision.datasets.SVHN, subset, False, "CHW", return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_stl10(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the STL10 data set. It consists of 13000 96x96 color images showing different objects.
@@ -469,6 +478,7 @@ def load_stl10(subset: str = "all", return_X_y: bool = False, downloads_path: st
     return _load_torch_image_data(torchvision.datasets.STL10, subset, False, "CHW", return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_gtsrb(subset: str = "all", image_size: tuple = (32, 32), return_X_y: bool = False,
                downloads_path: str | Path = None) -> Bunch:
     """

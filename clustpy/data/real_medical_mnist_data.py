@@ -2,6 +2,7 @@ import numpy as np
 from clustpy.data._utils import _get_download_dir, _download_file, flatten_images
 from sklearn.datasets._base import Bunch
 from pathlib import Path
+from ._cache import cache_dataset
 
 
 def _load_medical_mnist_data(dataset_name: str, subset: str, colored: bool, multiple_labelings: bool,
@@ -104,6 +105,7 @@ Actual datasets
 """
 
 
+@cache_dataset
 def load_path_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the PathMNIST data set. It consists of 107180 28x28 colored images belonging to one of 9 classes.
@@ -138,6 +140,7 @@ def load_path_mnist(subset: str = "all", return_X_y: bool = False, downloads_pat
     return _load_medical_mnist_data("pathmnist", subset, True, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_chest_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the ChestMNIST data set. It consists of 112120 28x28 grayscale images.
@@ -173,6 +176,7 @@ def load_chest_mnist(subset: str = "all", return_X_y: bool = False, downloads_pa
     return _load_medical_mnist_data("chestmnist", subset, False, True, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_derma_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the DermaMNIST data set. It consists of 10015 28x28 colored images belonging to one of 7 classes.
@@ -210,6 +214,7 @@ def load_derma_mnist(subset: str = "all", return_X_y: bool = False, downloads_pa
     return _load_medical_mnist_data("dermamnist", subset, True, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_oct_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the OCTMNIST data set. It consists of 109309 28x28 grayscale images belonging to one of 4 classes.
@@ -244,6 +249,7 @@ def load_oct_mnist(subset: str = "all", return_X_y: bool = False, downloads_path
     return _load_medical_mnist_data("octmnist", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_pneumonia_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the PneumoniaMNIST data set. It consists of 5856 28x28 grayscale images belonging to one of 2 classes.
@@ -278,6 +284,7 @@ def load_pneumonia_mnist(subset: str = "all", return_X_y: bool = False, download
     return _load_medical_mnist_data("pneumoniamnist", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_retina_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the RetinaMNIST data set. It consists of 1600 28x28 colored images belonging to one of 5 classes.
@@ -312,6 +319,7 @@ def load_retina_mnist(subset: str = "all", return_X_y: bool = False, downloads_p
     return _load_medical_mnist_data("retinamnist", subset, True, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_breast_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the BreastMNIST data set. It consists of 780 28x28 grayscale images belonging to one of 2 classes.
@@ -346,6 +354,7 @@ def load_breast_mnist(subset: str = "all", return_X_y: bool = False, downloads_p
     return _load_medical_mnist_data("breastmnist", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_blood_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the BloodMNIST data set. It consists of 17092 28x28 colored images belonging to one of 8 classes.
@@ -380,6 +389,7 @@ def load_blood_mnist(subset: str = "all", return_X_y: bool = False, downloads_pa
     return _load_medical_mnist_data("bloodmnist", subset, True, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_tissue_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the TissueMNIST data set. It consists of 236386 28x28 grayscale images belonging to one of 8 classes.
@@ -414,6 +424,7 @@ def load_tissue_mnist(subset: str = "all", return_X_y: bool = False, downloads_p
     return _load_medical_mnist_data("tissuemnist", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_organ_a_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the OrganAMNIST data set. It consists of 58850 28x28 grayscale images belonging to one of 11 classes.
@@ -451,6 +462,7 @@ def load_organ_a_mnist(subset: str = "all", return_X_y: bool = False, downloads_
     return _load_medical_mnist_data("organamnist", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_organ_c_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the OrganCMNIST data set. It consists of 23660 28x28 grayscale images belonging to one of 11 classes.
@@ -488,6 +500,7 @@ def load_organ_c_mnist(subset: str = "all", return_X_y: bool = False, downloads_
     return _load_medical_mnist_data("organcmnist", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_organ_s_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the OrganSMNIST data set. It consists of 25221 28x28 grayscale images belonging to one of 11 classes.
@@ -525,6 +538,7 @@ def load_organ_s_mnist(subset: str = "all", return_X_y: bool = False, downloads_
     return _load_medical_mnist_data("organsmnist", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_organ_mnist_3d(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the OrganMNIST3D data set. It consists of 1743 28x28x28 grayscale images belonging to one of 11 classes.
@@ -562,6 +576,7 @@ def load_organ_mnist_3d(subset: str = "all", return_X_y: bool = False, downloads
     return _load_medical_mnist_data("organmnist3d", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_nodule_mnist_3d(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the NoduleMNIST3D data set. It consists of 1633 28x28x28 grayscale images belonging to one of 2 classes.
@@ -596,6 +611,7 @@ def load_nodule_mnist_3d(subset: str = "all", return_X_y: bool = False, download
     return _load_medical_mnist_data("nodulemnist3d", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_adrenal_mnist_3d(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the AdrenalMNIST3D data set. It consists of 1584 28x28x28 grayscale images belonging to one of 2 classes.
@@ -627,6 +643,7 @@ def load_adrenal_mnist_3d(subset: str = "all", return_X_y: bool = False, downloa
     return _load_medical_mnist_data("adrenalmnist3d", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_fracture_mnist_3d(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the FractureMNIST3D data set. It consists of 1370 28x28x28 grayscale images belonging to one of 3 classes.
@@ -661,6 +678,7 @@ def load_fracture_mnist_3d(subset: str = "all", return_X_y: bool = False, downlo
     return _load_medical_mnist_data("fracturemnist3d", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_vessel_mnist_3d(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the VesselMNIST3D data set. It consists of 1909 28x28x28 grayscale images belonging to one of 2 classes.
@@ -695,6 +713,7 @@ def load_vessel_mnist_3d(subset: str = "all", return_X_y: bool = False, download
     return _load_medical_mnist_data("vesselmnist3d", subset, False, False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_synapse_mnist_3d(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the SynapseMNIST3D data set. It consists of 1759 28x28x28 grayscale images belonging to one of 2 classes.

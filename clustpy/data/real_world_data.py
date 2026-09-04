@@ -10,6 +10,7 @@ from scipy.io import loadmat
 import re
 from sklearn.datasets._base import Bunch
 from pathlib import Path
+from ._cache import cache_dataset
 
 
 # More datasets https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass.html#usps
@@ -20,6 +21,7 @@ Load Sklearn datasets
 """
 
 
+@cache_dataset
 def load_iris(return_X_y: bool = False) -> Bunch:
     """
     Load the iris data set. It consists of the petal and sepal width and length of three different types of irises (Setosa,
@@ -49,6 +51,7 @@ def load_iris(return_X_y: bool = False) -> Bunch:
     return dataset
 
 
+@cache_dataset
 def load_wine(return_X_y: bool = False) -> Bunch:
     """
     Load the wine data set. It consists of 13 different properties of three different types of wine.
@@ -78,6 +81,7 @@ def load_wine(return_X_y: bool = False) -> Bunch:
     return dataset
 
 
+@cache_dataset
 def load_breast_cancer(return_X_y: bool = False) -> Bunch:
     """
     Load the breast cancer wisconsin data set. It consists of 32 features computed from digitized images of fine needle
@@ -107,6 +111,7 @@ def load_breast_cancer(return_X_y: bool = False) -> Bunch:
     return dataset
 
 
+@cache_dataset
 def load_olivetti_faces(return_X_y: bool = False) -> Bunch:
     """
     Load the olivetti faces data set. It consists of 400 64x64 grayscale images showing faces of 40 different persons.
@@ -138,6 +143,7 @@ def load_olivetti_faces(return_X_y: bool = False) -> Bunch:
         return dataset
 
 
+@cache_dataset
 def load_newsgroups(subset: str = "all", use_tfidf: bool = True, use_stemming: bool = True, use_stop_words: bool = True, 
                     max_df: float | int = 1., min_df: float | int = 1, max_features: int = 2000, min_variance : float = 0., 
                     sublinear_tf: bool = False, return_X_y: bool = False) -> Bunch:
@@ -198,6 +204,7 @@ def load_newsgroups(subset: str = "all", use_tfidf: bool = True, use_stemming: b
         return Bunch(dataset_name="20Newsgroups", data=data, target=newsgroups.target, columns=vocabulary)
 
 
+@cache_dataset
 def load_rcv1(subset: str = "all", n_features: int = 2000, categories: tuple = ("CCAT", "GCAT", "MCAT", "ECAT"),
                  return_X_y: bool = False) -> Bunch:
     """
@@ -279,6 +286,7 @@ Other datasets
 """
 
 
+@cache_dataset
 def load_imagenet_dog(subset: str = "all",
                       image_size: tuple = (224, 224),
                       breeds: list = ["n02085936-Maltese_dog", "n02086646-Blenheim_spaniel", "n02088238-basset",
@@ -392,6 +400,7 @@ def load_imagenet_dog(subset: str = "all",
                      images=data_image, image_format=image_format, classes=breeds)
 
 
+@cache_dataset
 def load_imagenet10(use_224_size: bool = True, return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the ImageNet-10 data set. This is a subset of the well-known ImageNet data set with only 10 classes.
@@ -459,6 +468,7 @@ def load_imagenet10(use_224_size: bool = True, return_X_y: bool = False, downloa
                      images=data_image, image_format=image_format)
 
 
+@cache_dataset
 def load_coil20(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the COIL-20 data set.
@@ -516,6 +526,7 @@ def load_coil20(return_X_y: bool = False, downloads_path: str | Path = None) -> 
         return Bunch(dataset_name="COIL20", data=data_flatten, target=labels, images=data_image, image_format="HW")
 
 
+@cache_dataset
 def load_coil100(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the COIL-100 data set.
@@ -581,6 +592,7 @@ Load WebKB
 """
 
 
+@cache_dataset
 def load_webkb(use_universities: tuple = ("cornell", "texas", "washington", "wisconsin"),
                use_categories: tuple = ("course", "faculty", "project", "student"), use_tfidf: bool = True, 
                use_stemming: bool = True, use_stop_words: bool = True, max_df: float | int = 1., 
@@ -707,6 +719,7 @@ BBC Data
 """
 
 
+@cache_dataset
 def load_bbcsport(use_tfidf: bool = True, use_stemming: bool = True, use_stop_words: bool = True, max_df: float | int = 1., 
                min_df: float | int = 1, max_features: int = 2000, min_variance : float = 0., sublinear_tf: bool = False, 
                return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
@@ -785,6 +798,7 @@ def load_bbcsport(use_tfidf: bool = True, use_stemming: bool = True, use_stop_wo
         return Bunch(dataset_name="BBCSport", data=data, target=labels, classes=topics, columns=vocabulary)
     
 
+@cache_dataset
 def load_bbcnews(use_tfidf: bool = True, use_stemming: bool = True, use_stop_words: bool = True, max_df: float | int = 1., 
                min_df: float | int = 1, max_features: int = 2000, min_variance : float = 0., sublinear_tf: bool = False, 
                return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:

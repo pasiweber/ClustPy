@@ -7,6 +7,7 @@ import numpy as np
 import zipfile
 from sklearn.datasets._base import Bunch
 from pathlib import Path
+from ._cache import cache_dataset
 
 
 """
@@ -98,6 +99,7 @@ Actual datasets
 """
 
 
+@cache_dataset
 def load_video_weizmann(use_actions : tuple = None, use_persons : tuple = None, 
                         image_size: tuple = None, frame_sampling_ratio: float = 1, return_X_y: bool = False,
                         downloads_path: str | Path = None) -> Bunch:
@@ -206,6 +208,7 @@ def load_video_weizmann(use_actions : tuple = None, use_persons : tuple = None,
                      image_format=image_format, classes=(use_actions, use_persons))
 
 
+@cache_dataset
 def load_video_keck_gesture(subset: str = "all", image_size: tuple = (200, 200), frame_sampling_ratio: float = 1,
                             return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """

@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.datasets._base import Bunch
 from clustpy.data._utils import unflatten_images
 from pathlib import Path
+from ._cache import cache_dataset
 
 
 def _load_nr_data(file_name: str, n_labels: int) -> (np.ndarray, np.ndarray):
@@ -35,6 +36,7 @@ Actual datasets
 """
 
 
+@cache_dataset
 def load_aloi_small(return_X_y: bool = False) -> Bunch:
     """
     Load a subset of the Amsterdam Library of Object Image (ALOI) consisting of 288 images of the objects red ball,
@@ -69,6 +71,7 @@ def load_aloi_small(return_X_y: bool = False) -> Bunch:
         return Bunch(dataset_name="ALOI_small", data=data, target=labels)
 
 
+@cache_dataset
 def load_fruit(return_X_y: bool = False) -> Bunch:
     """
     Load the fruits data set. It consists of 105 preprocessed images of apples, bananas and grapes in red, green and yellow.
@@ -97,6 +100,7 @@ def load_fruit(return_X_y: bool = False) -> Bunch:
         return Bunch(dataset_name="FRUIT", data=data, target=labels)
 
 
+@cache_dataset
 def load_nrletters(return_X_y: bool = False) -> Bunch:
     """
     Load the NRLetters data set. It consists of 10000 9x7 images of the letters A, B, C, X, Y and Z in pink, cyan and
@@ -127,10 +131,10 @@ def load_nrletters(return_X_y: bool = False) -> Bunch:
         return data, labels
     else:
         data_image = unflatten_images(data, (9, 7, 3))
-        return Bunch(dataset_name="NrLetters", data=data, target=labels, images=data_image,
-                     image_format="CHW")
+        return Bunch(dataset_name="NrLetters", data=data, target=labels, images=data_image, image_format="CHW")
 
 
+@cache_dataset
 def load_stickfigures(return_X_y: bool = False) -> Bunch:
     """
     Load the Dancing Stick Figures data set. It consists of 900 20x20 grayscale images of stick figures in different poses.
@@ -161,5 +165,4 @@ def load_stickfigures(return_X_y: bool = False) -> Bunch:
         return data, labels
     else:
         data_image = unflatten_images(data, (20, 20))
-        return Bunch(dataset_name="Stickfigures", data=data, target=labels, images=data_image,
-                     image_format="HW")
+        return Bunch(dataset_name="Stickfigures", data=data, target=labels, images=data_image, image_format="HW")

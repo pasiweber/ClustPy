@@ -3,6 +3,7 @@ from clustpy.data._utils import _get_download_dir, _download_file
 from sklearn.datasets._base import Bunch
 import zipfile
 from pathlib import Path
+from ._cache import cache_dataset
 
 
 def _load_timeseries_classification_data(dataset_name: str, subset: str, labels_minus_one: bool, file_type: str,
@@ -100,6 +101,7 @@ def _load_timeseries_classification_data(dataset_name: str, subset: str, labels_
         return Bunch(dataset_name=dataset_name, data=data, target=labels)
 
 
+@cache_dataset
 def load_motestrain(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the motestrain data set. It consists of 1272 samples belonging to one of 2 classes.
@@ -129,6 +131,7 @@ def load_motestrain(subset: str = "all", return_X_y: bool = False, downloads_pat
     return _load_timeseries_classification_data("MoteStrain", subset, True, "txt", False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_proximal_phalanx_outline(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the proximal phalanx outline data set. It consists of 876 samples belonging to one of 2 classes.
@@ -159,6 +162,7 @@ def load_proximal_phalanx_outline(subset: str = "all", return_X_y: bool = False,
                                                 return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_diatom_size_reduction(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the diatom size reduction data set. It consists of 322 samples belonging to one of 4 classes.
@@ -189,6 +193,7 @@ def load_diatom_size_reduction(subset: str = "all", return_X_y: bool = False, do
                                                 return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_symbols(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the symbols data set. It consists of 1020 samples belonging to one of 6 classes.
@@ -218,6 +223,7 @@ def load_symbols(subset: str = "all", return_X_y: bool = False, downloads_path: 
     return _load_timeseries_classification_data("Symbols", subset, True, "txt", False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_olive_oil(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the OliveOil data set. It consists of 60 samples belonging to one of 4 classes.
@@ -247,6 +253,7 @@ def load_olive_oil(subset: str = "all", return_X_y: bool = False, downloads_path
     return _load_timeseries_classification_data("OliveOil", subset, True, "txt", False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_plane(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the plane data set. It consists of 210 samples belonging to one of 7 classes.
@@ -276,6 +283,7 @@ def load_plane(subset: str = "all", return_X_y: bool = False, downloads_path: st
     return _load_timeseries_classification_data("Plane", subset, True, "txt", False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_sony_aibo_robot_surface(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the Sony AIBO Robot Surface 1 data set. It consists of 621 samples belonging to one of 2 classes.
@@ -306,6 +314,7 @@ def load_sony_aibo_robot_surface(subset: str = "all", return_X_y: bool = False, 
                                                 return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_two_patterns(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the two patterns data set. It consists of 5000 samples belonging to one of 4 classes.
@@ -335,6 +344,7 @@ def load_two_patterns(subset: str = "all", return_X_y: bool = False, downloads_p
     return _load_timeseries_classification_data("TwoPatterns", subset, True, "txt", False, return_X_y, downloads_path)
 
 
+@cache_dataset
 def load_lsst(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the LSST data set. It consists of 4925 samples belonging to one of 14 classes.
