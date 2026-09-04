@@ -479,7 +479,6 @@ def cdbw_score(X, labels, metric="euclidean", noise_strategy="filter", intra_den
         'yule'.
     noise_strategy : str
         Strategy for handling noise (see clustpy.metrics.handle_noise). Must be one of:
-        - "keep"            : Keep all noise points as they are (default).
         - "one_cluster"     : Assign all noise points to a single new cluster.
         - "singletons"      : Assign each noise point to its own cluster.
         - "filter"          : Remove all noise points.
