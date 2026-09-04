@@ -33,7 +33,6 @@ def dcsi_score(X, labels, min_points=5, noise_strategy="filter"):
         min_points value to use.
     noise_strategy : str
         Strategy for handling noise (see clustpy.metrics.handle_noise). Must be one of:
-        - "keep"            : Keep all noise points as they are (default).
         - "one_cluster"     : Assign all noise points to a single new cluster.
         - "singletons"      : Assign each noise point to its own cluster.
         - "filter"          : Remove all noise points.
