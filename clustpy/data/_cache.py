@@ -10,6 +10,8 @@ from typing import Any
 # Default cache directory
 CACHE_DIR = Path.home() / ".cache" / "clustpy"
 
+ENABLE_DEFAULT_CACHING = False
+
 
 def _make_cache_key_value(value: Any) -> Any:
     """
@@ -101,7 +103,7 @@ def cache_dataset(func):
     signature = inspect.signature(func)
 
     @wraps(func)
-    def wrapper(*args, use_cache=True, **kwargs):
+    def wrapper(*args, use_cache=ENABLE_DEFAULT_CACHING, **kwargs):
 
         # No caching requested
         if not use_cache:
