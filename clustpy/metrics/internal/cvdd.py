@@ -153,12 +153,12 @@ def cvdd_score(
     labels : array-like, shape (n_samples,)
         Predicted labels for each sample.  (-1 - for noise)
     noise_strategy : str
-        Strategy for handling noise. Must be one of:
-        - "keep"               : Keep all noise points as they are (default).
-        - "as_one_cluster"     : Assign all noise points to a single new cluster.
-        - "as_singletons"      : Assign each noise point to its own cluster.
-        - "filter"             : Remove all noise points.
-        - "to_nearest_cluster" : Assign each noise point to nearest cluster.
+        Strategy for handling noise (see clustpy.metrics.handle_noise). Must be one of:
+        - "keep"            : Keep all noise points as they are (default).
+        - "one_cluster"     : Assign all noise points to a single new cluster.
+        - "singletons"      : Assign each noise point to its own cluster.
+        - "filter"          : Remove all noise points.
+        - "nearest_cluster" : Assign each noise point to nearest cluster.
 
     Returns
     -------
@@ -171,6 +171,7 @@ def cvdd_score(
            by Lianyu Hu and Caiming Zhong
            see https://ieeexplore.ieee.org/document/8672850
     """
+
     labels, X = handle_noise(labels, strategy=noise_strategy, X=X)
     labels[labels != -1] = LabelEncoder().fit_transform(labels[labels != -1])
     X, labels = _check_length_data_and_labels(X, labels)
