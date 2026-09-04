@@ -52,7 +52,7 @@ def dcsi_score(X, labels, min_points=5, noise_strategy="filter"):
     """
 
     assert noise_strategy != "keep", "DCSI score is not defined for noise points."
-    labels, X = handle_noise(labels, strategy=noise_strategy, X=X)
+    labels, X, _ = handle_noise(labels, strategy=noise_strategy, X=X)
     labels = LabelEncoder().fit_transform(labels)
     X, labels = _check_length_data_and_labels(X, labels)
     assert isinstance(labels, np.ndarray), "labels must be of type np.ndarray. Your input has type {0}".format(
