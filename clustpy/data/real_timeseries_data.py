@@ -3,8 +3,7 @@ from clustpy.data._utils import _get_download_dir, _download_file
 from sklearn.datasets._base import Bunch
 import zipfile
 from pathlib import Path
-from ._cache import cache_dataset
-
+from ._cache import cache_dataset, USE_CACHE_DEFAULT
 
 def _load_timeseries_classification_data(dataset_name: str, subset: str, labels_minus_one: bool, file_type: str,
                                          last_column_are_labels: bool, return_X_y: bool, downloads_path: str | Path) -> Bunch:
@@ -102,7 +101,7 @@ def _load_timeseries_classification_data(dataset_name: str, subset: str, labels_
 
 
 @cache_dataset
-def load_motestrain(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_motestrain(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the motestrain data set. It consists of 1272 samples belonging to one of 2 classes.
     The data set is composed of 20 training and 1252 test samples.
@@ -132,7 +131,7 @@ def load_motestrain(subset: str = "all", return_X_y: bool = False, downloads_pat
 
 
 @cache_dataset
-def load_proximal_phalanx_outline(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_proximal_phalanx_outline(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the proximal phalanx outline data set. It consists of 876 samples belonging to one of 2 classes.
     The data set is composed of 600 training and 276 test samples.
@@ -163,7 +162,7 @@ def load_proximal_phalanx_outline(subset: str = "all", return_X_y: bool = False,
 
 
 @cache_dataset
-def load_diatom_size_reduction(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_diatom_size_reduction(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the diatom size reduction data set. It consists of 322 samples belonging to one of 4 classes.
     The data set is composed of 16 training and 306 test samples.
@@ -194,7 +193,7 @@ def load_diatom_size_reduction(subset: str = "all", return_X_y: bool = False, do
 
 
 @cache_dataset
-def load_symbols(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_symbols(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the symbols data set. It consists of 1020 samples belonging to one of 6 classes.
     The data set is composed of 25 training and 995 test samples.
@@ -224,7 +223,7 @@ def load_symbols(subset: str = "all", return_X_y: bool = False, downloads_path: 
 
 
 @cache_dataset
-def load_olive_oil(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_olive_oil(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the OliveOil data set. It consists of 60 samples belonging to one of 4 classes.
     The data set is composed of 30 training and 30 test samples.
@@ -254,7 +253,7 @@ def load_olive_oil(subset: str = "all", return_X_y: bool = False, downloads_path
 
 
 @cache_dataset
-def load_plane(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_plane(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the plane data set. It consists of 210 samples belonging to one of 7 classes.
     The data set is composed of 105 training and 105 test samples.
@@ -284,7 +283,7 @@ def load_plane(subset: str = "all", return_X_y: bool = False, downloads_path: st
 
 
 @cache_dataset
-def load_sony_aibo_robot_surface(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_sony_aibo_robot_surface(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the Sony AIBO Robot Surface 1 data set. It consists of 621 samples belonging to one of 2 classes.
     The data set is composed of 20 training and 601 test samples.
@@ -315,7 +314,7 @@ def load_sony_aibo_robot_surface(subset: str = "all", return_X_y: bool = False, 
 
 
 @cache_dataset
-def load_two_patterns(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_two_patterns(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the two patterns data set. It consists of 5000 samples belonging to one of 4 classes.
     The data set is composed of 1000 training and 4000 test samples.
@@ -345,7 +344,7 @@ def load_two_patterns(subset: str = "all", return_X_y: bool = False, downloads_p
 
 
 @cache_dataset
-def load_lsst(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_lsst(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the LSST data set. It consists of 4925 samples belonging to one of 14 classes.
     The data set is composed of 2459 training and 2466 test samples.

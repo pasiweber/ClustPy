@@ -10,7 +10,7 @@ from scipy.io import loadmat
 import re
 from sklearn.datasets._base import Bunch
 from pathlib import Path
-from ._cache import cache_dataset
+from ._cache import cache_dataset, USE_CACHE_DEFAULT
 
 
 # More datasets https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass.html#usps
@@ -22,7 +22,7 @@ Load Sklearn datasets
 
 
 @cache_dataset
-def load_iris(return_X_y: bool = False) -> Bunch:
+def load_iris(return_X_y: bool = False, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the iris data set. It consists of the petal and sepal width and length of three different types of irises (Setosa,
     Versicolour, Virginica).
@@ -52,7 +52,7 @@ def load_iris(return_X_y: bool = False) -> Bunch:
 
 
 @cache_dataset
-def load_wine(return_X_y: bool = False) -> Bunch:
+def load_wine(return_X_y: bool = False, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the wine data set. It consists of 13 different properties of three different types of wine.
     N=178, d=13, k=3.
@@ -82,7 +82,7 @@ def load_wine(return_X_y: bool = False) -> Bunch:
 
 
 @cache_dataset
-def load_breast_cancer(return_X_y: bool = False) -> Bunch:
+def load_breast_cancer(return_X_y: bool = False, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the breast cancer wisconsin data set. It consists of 32 features computed from digitized images of fine needle
     aspirate of breast mass. The classes are the result of a diagnosis (malignant or benign).
@@ -112,7 +112,7 @@ def load_breast_cancer(return_X_y: bool = False) -> Bunch:
 
 
 @cache_dataset
-def load_olivetti_faces(return_X_y: bool = False) -> Bunch:
+def load_olivetti_faces(return_X_y: bool = False, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the olivetti faces data set. It consists of 400 64x64 grayscale images showing faces of 40 different persons.
     N=400, d=4096, k=40.
@@ -205,7 +205,7 @@ def load_newsgroups(subset: str = "all", use_tfidf: bool = True, use_stemming: b
 
 
 @cache_dataset
-def load_rcv1(subset: str = "all", n_features: int = 2000, categories: tuple = ("CCAT", "GCAT", "MCAT", "ECAT"),
+def load_rcv1(subset: str = "all", n_features: int = 2000, categories: tuple = ("CCAT", "GCAT", "MCAT", "ECAT", use_cache=CACHE_BY_DEFAULT),
                  return_X_y: bool = False) -> Bunch:
     """
     Load the RCV1 data set. It consists of over 800000 manually categorized newswire stories made available by rcv1,
@@ -401,7 +401,7 @@ def load_imagenet_dog(subset: str = "all",
 
 
 @cache_dataset
-def load_imagenet10(use_224_size: bool = True, return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_imagenet10(use_224_size: bool = True, return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the ImageNet-10 data set. This is a subset of the well-known ImageNet data set with only 10 classes.
     It consists of 13000 224x224 (or 96x96) color images showing different objects.
@@ -469,7 +469,7 @@ def load_imagenet10(use_224_size: bool = True, return_X_y: bool = False, downloa
 
 
 @cache_dataset
-def load_coil20(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_coil20(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the COIL-20 data set.
     It consists of 1440 128x128 gray-scale images of 20 objects photographed from 72 different angles.
@@ -527,7 +527,7 @@ def load_coil20(return_X_y: bool = False, downloads_path: str | Path = None) -> 
 
 
 @cache_dataset
-def load_coil100(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_coil100(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the COIL-100 data set.
     It consists of 7200 128x128 color images of 100 objects photographed from 72 different angles.
@@ -593,7 +593,7 @@ Load WebKB
 
 
 @cache_dataset
-def load_webkb(use_universities: tuple = ("cornell", "texas", "washington", "wisconsin"),
+def load_webkb(use_universities: tuple = ("cornell", "texas", "washington", "wisconsin", use_cache=CACHE_BY_DEFAULT),
                use_categories: tuple = ("course", "faculty", "project", "student"), use_tfidf: bool = True, 
                use_stemming: bool = True, use_stop_words: bool = True, max_df: float | int = 1., 
                min_df: float | int = 1, max_features: int = 2000, min_variance : float = 0., 

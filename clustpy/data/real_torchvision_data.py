@@ -4,7 +4,7 @@ import numpy as np
 from clustpy.data._utils import _get_download_dir, _load_image_data, flatten_images
 from sklearn.datasets._base import Bunch
 from pathlib import Path
-from ._cache import cache_dataset
+from ._cache import cache_dataset, USE_CACHE_DEFAULT
 
 
 """
@@ -148,7 +148,7 @@ Actual datasets
 
 
 @cache_dataset
-def load_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the MNIST data set. It consists of 70000 28x28 grayscale images showing handwritten digits (0 to 9).
     The data set is composed of 60000 training and 10000 test images.
@@ -185,7 +185,7 @@ def load_mnist(subset: str = "all", return_X_y: bool = False, downloads_path: st
 
 
 @cache_dataset
-def load_kmnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_kmnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the Kuzushiji-MNIST data set. It consists of 70000 28x28 grayscale images showing Kanji characters.
     It is composed of 10 different characters, each representing one column of hiragana.
@@ -223,7 +223,7 @@ def load_kmnist(subset: str = "all", return_X_y: bool = False, downloads_path: s
 
 
 @cache_dataset
-def load_fmnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_fmnist(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the Fashion-MNIST data set. It consists of 70000 28x28 grayscale images showing articles from the Zalando online store.
     Each sample belongs to one of 10 product groups.
@@ -261,7 +261,7 @@ def load_fmnist(subset: str = "all", return_X_y: bool = False, downloads_path: s
 
 
 @cache_dataset
-def load_usps(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_usps(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the USPS data set. It consists of 9298 16x16 grayscale images showing handwritten digits (0 to 9).
     The data set is composed of 7291 training and 2007 test images.
@@ -298,7 +298,7 @@ def load_usps(subset: str = "all", return_X_y: bool = False, downloads_path: str
 
 
 @cache_dataset
-def load_cifar10(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_cifar10(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the CIFAR10 data set. It consists of 60000 32x32 color images showing different objects.
     The classes are airplane, automobile, bird, cat, deer, dog, frog, horse, ship and truck.
@@ -405,7 +405,7 @@ def load_cifar100(subset: str = "all", use_superclasses: bool = False, return_X_
 
 
 @cache_dataset
-def load_svhn(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_svhn(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the SVHN data set. It consists of 99289 32x32 color images showing house numbers (0 to 9).
     The data set is composed of 73257 training and 26032 test images.
@@ -441,7 +441,7 @@ def load_svhn(subset: str = "all", return_X_y: bool = False, downloads_path: str
 
 
 @cache_dataset
-def load_stl10(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_stl10(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the STL10 data set. It consists of 13000 96x96 color images showing different objects.
     The classes are airplane, bird, car, cat, deer, dog, horse, monkey, ship and truck.
@@ -479,7 +479,7 @@ def load_stl10(subset: str = "all", return_X_y: bool = False, downloads_path: st
 
 
 @cache_dataset
-def load_gtsrb(subset: str = "all", image_size: tuple = (32, 32), return_X_y: bool = False,
+def load_gtsrb(subset: str = "all", image_size: tuple = (32, 32, use_cache=CACHE_BY_DEFAULT), return_X_y: bool = False,
                downloads_path: str | Path = None) -> Bunch:
     """
     Load the GTSRB (German Traffic Sign Recognition Benchmark) data set. It consists of 39270 color images showing 43 different traffic signs.

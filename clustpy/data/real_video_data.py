@@ -7,7 +7,7 @@ import numpy as np
 import zipfile
 from sklearn.datasets._base import Bunch
 from pathlib import Path
-from ._cache import cache_dataset
+from ._cache import cache_dataset, USE_CACHE_DEFAULT
 
 
 """
@@ -209,7 +209,7 @@ def load_video_weizmann(use_actions : tuple = None, use_persons : tuple = None,
 
 
 @cache_dataset
-def load_video_keck_gesture(subset: str = "all", image_size: tuple = (200, 200), frame_sampling_ratio: float = 1,
+def load_video_keck_gesture(subset: str = "all", image_size: tuple = (200, 200, use_cache=CACHE_BY_DEFAULT), frame_sampling_ratio: float = 1,
                             return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
     """
     Load the Keck Gesture video data set.

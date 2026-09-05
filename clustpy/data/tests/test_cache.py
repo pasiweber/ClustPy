@@ -8,7 +8,7 @@ from sklearn.utils import Bunch
 
 import clustpy
 import clustpy.data._cache as cache_module
-from clustpy.data._cache import cache_dataset, clear_cache, clear_dataset_cache
+from clustpy.data._cache import cache_dataset, clear_cache, clear_dataset_cache, USE_CACHE_DEFAULT
 
 # ============================================================================
 # Test helpers
@@ -154,7 +154,7 @@ def test_use_cache_false_bypasses_cache(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=USE_CACHE_DEFAULT):
         nonlocal calls
         calls += 1
 
@@ -182,7 +182,7 @@ def test_use_cache_false_does_not_create_cache(cache_dir):
     """
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=USE_CACHE_DEFAULT):
         return make_bunch()
 
     load_test(use_cache=False)
@@ -190,9 +190,9 @@ def test_use_cache_false_does_not_create_cache(cache_dir):
     assert not cache_dir.exists()
 
 
-def test_default_is_use_cache_true(cache_dir):
+def test_default_use_cache(cache_dir):
     """
-    The current implementation defaults to use_cache=True.
+    The current implementation defaults to use_cache=USE_CACHE_DEFAULT.
     """
 
     calls = 0
@@ -207,7 +207,10 @@ def test_default_is_use_cache_true(cache_dir):
     load_test()
     load_test()
 
-    assert calls == 1
+    if USE_CACHE_DEFAULT:
+        assert calls == 1
+    else:
+        assert calls == 2
 
 
 # ============================================================================

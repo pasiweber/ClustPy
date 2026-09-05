@@ -6,11 +6,11 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 from sklearn.datasets._base import Bunch
 from pathlib import Path
-from ._cache import cache_dataset
+from ._cache import cache_dataset, USE_CACHE_DEFAULT
 
 
 @cache_dataset
-def load_banknotes(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_banknotes(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the banknote authentication data set. It consists of 1372 genuine and forged banknote samples.
     N=1372, d=4, k=2.
@@ -44,7 +44,7 @@ def load_banknotes(return_X_y: bool = False, downloads_path: str | Path = None) 
 
 
 @cache_dataset
-def load_spambase(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_spambase(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the spambase data set. It consists of 4601 spam and non-spam mails.
     N=4601, d=57, k=2.
@@ -78,7 +78,7 @@ def load_spambase(return_X_y: bool = False, downloads_path: str | Path = None) -
 
 
 @cache_dataset
-def load_seeds(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_seeds(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the seeds data set. It consists of 210 samples belonging to one of three varieties of wheat.
     N=210, d=7, k=3.
@@ -115,7 +115,7 @@ def load_seeds(return_X_y: bool = False, downloads_path: str | Path = None) -> B
 
 
 @cache_dataset
-def load_skin(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_skin(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the Skin Segmentation data set. It consists of 245057 skin- and non-skin samples with their B, G, R color
     information.
@@ -153,7 +153,7 @@ def load_skin(return_X_y: bool = False, downloads_path: str | Path = None) -> Bu
 
 
 @cache_dataset
-def load_soybean_small(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_soybean_small(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the small version of the soybean data set. It is a small subset of the original soybean data set.
     It consists of 47 samples belonging to one of 4 classes.
@@ -196,7 +196,7 @@ def load_soybean_small(return_X_y: bool = False, downloads_path: str | Path = No
 
 
 @cache_dataset
-def load_soybean_large(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_soybean_large(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the large version of the soybean data set. It consists of 562 samples belonging to one of 15 classes.
     Originally, the data set would have samples and 19 classes but some samples have attributes showing '?' values. Those
@@ -265,7 +265,7 @@ def load_soybean_large(subset: str = "all", return_X_y: bool = False, downloads_
 
 
 @cache_dataset
-def load_pendigits(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_pendigits(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the pendigits data set. It consists of 10992 vectors of length 16, representing 8 coordinates. The coordinates
     were taken from the task of writing digits (0 to 9) on a tablet.
@@ -317,7 +317,7 @@ def load_pendigits(subset: str = "all", return_X_y: bool = False, downloads_path
 
 
 @cache_dataset
-def load_ecoli(ignore_small_clusters: bool = False, return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_ecoli(ignore_small_clusters: bool = False, return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the ecoli data set. It consists of 336 samples belonging to one of 8 classes.
     N=336, d=7, k=8.
@@ -371,7 +371,7 @@ def load_ecoli(ignore_small_clusters: bool = False, return_X_y: bool = False, do
 
 
 @cache_dataset
-def load_htru2(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_htru2(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the HTRU2 data set. It consists of 17898 samples belonging to the pulsar or non-pulsar class.
     A special property is that more than 90% of the data belongs to class 0.
@@ -418,7 +418,7 @@ def load_htru2(return_X_y: bool = False, downloads_path: str | Path = None) -> B
 
 
 @cache_dataset
-def load_letterrecognition(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_letterrecognition(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the Letter Recognition data set. It consists of 20000 samples where each sample represents one of the 26 capital
     letters in the English alphabet. All samples are composed of 16 numerical stimuli describing the respective letter.
@@ -471,7 +471,7 @@ def load_letterrecognition(return_X_y: bool = False, downloads_path: str | Path 
 
 
 @cache_dataset
-def load_har(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_har(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the Human Activity Recognition data set. It consists of 10299 samples each representing sensor data of a person
     performing an activity. The six activities are walking, walking_upstairs, walking_downstairs, sitting, standing and
@@ -536,7 +536,7 @@ def load_har(subset: str = "all", return_X_y: bool = False, downloads_path: str 
 
 
 @cache_dataset
-def load_statlog_shuttle(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_statlog_shuttle(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the statlog shuttle data set. It consists of 58000 samples belonging to one of 7 classes. A special property is
     that about 80% of the data belongs to class 0.
@@ -686,7 +686,7 @@ def load_mice_protein(return_additional_labels: bool = False, return_X_y: bool =
 
 
 @cache_dataset
-def load_user_knowledge(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_user_knowledge(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the user knowledge data set. It consists of 403 samples belonging to one of 4 classes.
     The 4 classes are the knowledge levels 'very low', 'low', 'middle' and 'high'.
@@ -756,7 +756,7 @@ def load_user_knowledge(subset: str = "all", return_X_y: bool = False, downloads
 
 
 @cache_dataset
-def load_breast_tissue(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_breast_tissue(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the breast tissue data set. It consists of 106 samples belonging to one of 6 classes.
     N=106, d=9, k=6.
@@ -800,7 +800,7 @@ def load_breast_tissue(return_X_y: bool = False, downloads_path: str | Path = No
 
 
 @cache_dataset
-def load_forest_types(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_forest_types(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the forest type mapping data set. It consists of 523 samples belonging to one of 4 classes.
     The data set is composed of 198 training and 325 test samples.
@@ -863,7 +863,7 @@ def load_forest_types(subset: str = "all", return_X_y: bool = False, downloads_p
 
 
 @cache_dataset
-def load_dermatology(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_dermatology(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the dermatology data set. It consists of 366 samples belonging to one of 6 classes.
     8 samples contain '?' values and are therefore removed.
@@ -905,7 +905,7 @@ def load_dermatology(return_X_y: bool = False, downloads_path: str | Path = None
 
 
 @cache_dataset
-def load_multiple_features(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_multiple_features(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the multiple features data set. It consists of 2000 samples belonging to one of 10 classes.
     Each class corresponds to handwritten numerals (0-9) extracted from a collection of Dutch utility maps.
@@ -950,7 +950,7 @@ def load_multiple_features(return_X_y: bool = False, downloads_path: str | Path 
 
 
 @cache_dataset
-def load_statlog_australian_credit_approval(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_statlog_australian_credit_approval(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the statlog Australian Credit Approval data set. It consists of 690 samples belonging to one of 2 classes.
     N=690, d=14, k=2.
@@ -985,7 +985,7 @@ def load_statlog_australian_credit_approval(return_X_y: bool = False, downloads_
 
 
 @cache_dataset
-def load_breast_cancer_wisconsin_original(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_breast_cancer_wisconsin_original(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the original breast cancer Wisconsin data set. It consists of 699 samples belonging to one of 2 classes.
     16 samples contain '?' values and will be removed.
@@ -1031,7 +1031,7 @@ def load_breast_cancer_wisconsin_original(return_X_y: bool = False, downloads_pa
 
 
 @cache_dataset
-def load_optdigits(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_optdigits(subset: str = "all", return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the optdigits data set. It consists of 5620 8x8 grayscale images, each representing a digit (0 to 9).
     Each pixel depicts the number of marked pixel within a 4x4 block of the original 32x32 bitmaps.
@@ -1085,7 +1085,7 @@ def load_optdigits(subset: str = "all", return_X_y: bool = False, downloads_path
 
 
 @cache_dataset
-def load_semeion(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_semeion(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the semeion data set. It consists of 1593 samples belonging to one of 10 classes.
     Each sample corresponds to a grayscale 16x16 scan of handwritten digits originating from about 80 different persons.
@@ -1130,7 +1130,7 @@ def load_semeion(return_X_y: bool = False, downloads_path: str | Path = None) ->
 
 
 @cache_dataset
-def load_cmu_faces(return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
+def load_cmu_faces(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT) -> Bunch:
     """
     Load the CMU Face Images data set. It consists of 640 30x32 grayscale images showing 20 persons in different poses
     (up, straight, left, right) and with different expressions (neutral, happy, sad, angry). Additionally, the persons
@@ -1205,7 +1205,7 @@ def load_cmu_faces(return_X_y: bool = False, downloads_path: str | Path = None) 
 
 
 @cache_dataset
-def load_gene_expression_cancer_rna_seq(return_X_y: bool = False, downloads_path: str | Path = None):
+def load_gene_expression_cancer_rna_seq(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT):
     """
     Load the Gene Expression Cancer RNA-SEQ data set. It consists of 801 samples belonging to one of 5 classes.
     N=801, d=20531, k=5.
@@ -1252,7 +1252,7 @@ def load_gene_expression_cancer_rna_seq(return_X_y: bool = False, downloads_path
 
 
 @cache_dataset
-def load_sport_articles(return_X_y: bool = False, downloads_path: str | Path = None):
+def load_sport_articles(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT):
     """
     Load the Sport Articles data set. It consists of 1000 samples belonging to one of 2 classes (objective or subjective).
     We only consider features that correspond to specific frequencies and, therefore, ignore the attributes 
@@ -1315,7 +1315,7 @@ def load_sport_articles(return_X_y: bool = False, downloads_path: str | Path = N
 
 
 @cache_dataset
-def load_wholesale_customers(return_X_y: bool = False, downloads_path: str | Path = None):
+def load_wholesale_customers(return_X_y: bool = False, downloads_path: str | Path = None, use_cache=USE_CACHE_DEFAULT):
     """
     Load the Wholesale Customers data set. It consists of 440 samples and can be grouped in two different ways:
     Either two classes based on the channel (Horeca or Retail) or three classes based on the region (Lisbon, Oporto or Other region).
@@ -1361,7 +1361,7 @@ def load_wholesale_customers(return_X_y: bool = False, downloads_path: str | Pat
 
 
 @cache_dataset
-def load_reuters21578(subset: str = "all", categories: tuple = ("grain", "money-fx", "earn", "acq", "crude"),
+def load_reuters21578(subset: str = "all", categories: tuple = ("grain", "money-fx", "earn", "acq", "crude", use_cache=CACHE_BY_DEFAULT),
                use_tfidf: bool = True, use_stemming: bool = True, use_stop_words: bool = True, max_df: float | int = 1., 
                min_df: float | int = 1, max_features: int = 2000, min_variance : float = 0., 
                sublinear_tf: bool = False, return_X_y: bool = False, downloads_path: str | Path = None) -> Bunch:
