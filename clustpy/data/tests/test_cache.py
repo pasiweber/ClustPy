@@ -61,7 +61,7 @@ def test_cache_dataset_returns_bunch(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -86,13 +86,13 @@ def test_cache_is_used_on_second_call(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
         return make_bunch()
 
-    first = load_test()
+    first = load_test(use_cache=True)
     second = load_test()
 
     assert calls == 1
@@ -108,7 +108,7 @@ def test_cache_file_is_created(cache_dir):
     """
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         return make_bunch()
 
     load_test()
@@ -130,7 +130,7 @@ def test_cache_directory_uses_function_name(cache_dir):
     """
 
     @cache_dataset
-    def load_my_dataset(return_X_y=False):
+    def load_my_dataset(return_X_y=False, use_cache=True):
         return make_bunch()
 
     load_my_dataset()
@@ -154,7 +154,7 @@ def test_use_cache_false_bypasses_cache(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(return_X_y=False, use_cache=USE_CACHE_DEFAULT):
+    def load_test(return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -182,7 +182,7 @@ def test_use_cache_false_does_not_create_cache(cache_dir):
     """
 
     @cache_dataset
-    def load_test(return_X_y=False, use_cache=USE_CACHE_DEFAULT):
+    def load_test(return_X_y=False, use_cache=True):
         return make_bunch()
 
     load_test(use_cache=False)
@@ -198,7 +198,7 @@ def test_default_use_cache(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=USE_CACHE_DEFAULT):
         nonlocal calls
         calls += 1
 
@@ -224,7 +224,7 @@ def test_return_X_y_true_returns_tuple(cache_dir):
     """
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         return make_bunch()
 
     data, target = load_test(return_X_y=True)
@@ -253,7 +253,7 @@ def test_return_X_y_true_still_caches_bunch(cache_dir):
     received_return_X_y = []
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         nonlocal calls
 
         calls += 1
@@ -293,7 +293,7 @@ def test_return_X_y_does_not_create_separate_cache(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -325,7 +325,7 @@ def test_different_parameters_create_different_cache_entries(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(size=1, return_X_y=False):
+    def load_test(size=1, return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -351,7 +351,7 @@ def test_same_parameters_reuse_cache(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(size=1, return_X_y=False):
+    def load_test(size=1, return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -375,7 +375,7 @@ def test_parameter_order_does_not_change_cache_key(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(a=1, b=2, return_X_y=False):
+    def load_test(a=1, b=2, return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -399,7 +399,7 @@ def test_list_and_tuple_parameters_are_supported(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(features=(1, 2), return_X_y=False):
+    def load_test(features=(1, 2), return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -419,7 +419,7 @@ def test_dictionary_parameters_are_supported(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(options=None, return_X_y=False):
+    def load_test(options=None, return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -442,7 +442,7 @@ def test_path_parameters_are_supported(cache_dir, tmp_path):
     calls = 0
 
     @cache_dataset
-    def load_test(path=None, return_X_y=False):
+    def load_test(path=None, return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -470,6 +470,7 @@ def test_downloads_path_is_ignored(cache_dir, tmp_path):
     def load_test(
         downloads_path=None,
         return_X_y=False,
+        use_cache=True,
     ):
         nonlocal calls
         calls += 1
@@ -497,7 +498,7 @@ def test_return_X_y_is_ignored_in_cache_key(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -526,7 +527,7 @@ def test_clustpy_version_is_part_of_cache_key(cache_dir, monkeypatch):
     calls = 0
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -554,7 +555,7 @@ def test_metadata_contains_clustpy_version(cache_dir):
     """
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         return make_bunch()
 
     load_test()
@@ -583,6 +584,7 @@ def test_metadata_contains_expected_information(cache_dir):
     def load_test(
         size=42,
         return_X_y=False,
+        use_cache=True,
     ):
         return make_bunch(value=size)
 
@@ -613,7 +615,7 @@ def test_metadata_and_pickle_have_same_cache_key(cache_dir):
     """
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         return make_bunch()
 
     load_test()
@@ -643,7 +645,7 @@ def test_missing_dataset_name_raises_error(cache_dir):
     """
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         return Bunch(
             data=np.array([[1, 2]]),
             target=np.array([0]),
@@ -659,7 +661,7 @@ def test_missing_data_raises_error(cache_dir):
     """
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         return Bunch(
             dataset_name="TestDataset",
             target=np.array([0]),
@@ -675,7 +677,7 @@ def test_missing_target_raises_error(cache_dir):
     """
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         return Bunch(
             dataset_name="TestDataset",
             data=np.array([[1, 2]]),
@@ -697,11 +699,11 @@ def test_clear_dataset_cache(cache_dir):
     """
 
     @cache_dataset
-    def load_test_a(return_X_y=False):
+    def load_test_a(return_X_y=False, use_cache=True):
         return make_bunch(dataset_name="DatasetA")
 
     @cache_dataset
-    def load_test_b(return_X_y=False):
+    def load_test_b(return_X_y=False, use_cache=True):
         return make_bunch(dataset_name="DatasetB")
 
     load_test_a()
@@ -730,11 +732,11 @@ def test_clear_dataset_cache_only_deletes_matching_dataset(cache_dir):
     """
 
     @cache_dataset
-    def load_dataset_a(return_X_y=False):
+    def load_dataset_a(return_X_y=False, use_cache=True):
         return make_bunch(dataset_name="DatasetA")
 
     @cache_dataset
-    def load_dataset_b(return_X_y=False):
+    def load_dataset_b(return_X_y=False, use_cache=True):
         return make_bunch(dataset_name="DatasetB")
 
     load_dataset_a()
@@ -760,7 +762,7 @@ def test_clear_dataset_cache_nonexistent_dataset(cache_dir):
     """
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         return make_bunch()
 
     load_test()
@@ -778,11 +780,11 @@ def test_clear_cache_removes_all_datasets(cache_dir):
     """
 
     @cache_dataset
-    def load_dataset_a(return_X_y=False):
+    def load_dataset_a(return_X_y=False, use_cache=True):
         return make_bunch(dataset_name="DatasetA")
 
     @cache_dataset
-    def load_dataset_b(return_X_y=False):
+    def load_dataset_b(return_X_y=False, use_cache=True):
         return make_bunch(dataset_name="DatasetB")
 
     load_dataset_a()
@@ -833,7 +835,7 @@ def test_multiple_parameter_variants_can_be_cleared(cache_dir):
     """
 
     @cache_dataset
-    def load_test(size=1, return_X_y=False):
+    def load_test(size=1, return_X_y=False, use_cache=True):
         return make_bunch(
             dataset_name="TestDataset",
             value=size,
@@ -868,7 +870,7 @@ def test_cached_bunch_is_loaded_from_disk(cache_dir):
     calls = 0
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         nonlocal calls
         calls += 1
 
@@ -894,7 +896,7 @@ def test_cached_bunch_is_independent_from_original(cache_dir):
     """
 
     @cache_dataset
-    def load_test(return_X_y=False):
+    def load_test(return_X_y=False, use_cache=True):
         return make_bunch()
 
     result = load_test()
@@ -926,7 +928,7 @@ def test_wraps_preserves_function_name(cache_dir):
     """
 
     @cache_dataset
-    def load_my_dataset(return_X_y=False):
+    def load_my_dataset(return_X_y=False, use_cache=True):
         return make_bunch()
 
     assert load_my_dataset.__name__ == "load_my_dataset"
@@ -938,7 +940,7 @@ def test_wraps_preserves_docstring(cache_dir):
     """
 
     @cache_dataset
-    def load_my_dataset(return_X_y=False):
+    def load_my_dataset(return_X_y=False, use_cache=True):
         """My test dataset."""
         return make_bunch()
 

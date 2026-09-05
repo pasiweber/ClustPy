@@ -104,15 +104,22 @@ def cache_dataset(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        use_cache = kwargs.pop("use_cache", USE_CACHE_DEFAULT)
+        # Bind arguments to their parameter names
+        bound = signature.bind(*args, **kwargs)
+        bound.apply_defaults()
+
+        # Check for `use_cache` in the call
+        # if not existent there -> check in the func's arguments
+        # if also not existent there -> use `USE_CACHE_DEFAULT`
+        use_cache = kwargs.pop("use_cache", None)
+        if use_cache == None:
+            use_cache = bound.arguments.get("use_cache")
+        if use_cache == None:
+            use_cache = USE_CACHE_DEFAULT
 
         # No caching requested
         if not use_cache:
             return func(*args, **kwargs)
-
-        # Bind arguments to their parameter names
-        bound = signature.bind(*args, **kwargs)
-        bound.apply_defaults()
 
         # Remember what the caller requested
         return_X_y = bound.arguments.get("return_X_y", False)
