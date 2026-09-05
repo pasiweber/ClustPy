@@ -1,9 +1,7 @@
 import json
-import time
-from pathlib import Path
-
 import numpy as np
 import pytest
+import inspect
 from sklearn.utils import Bunch
 
 import clustpy
@@ -685,6 +683,195 @@ def test_missing_target_raises_error(cache_dir):
 
     with pytest.raises(TypeError, match="target"):
         load_test()
+
+
+# ============================================================================
+# Test Cache Decorator Signature and Wrapper Preservation
+# ============================================================================
+
+
+def test_cache_dataset_preserves_original_signature():
+    def example_loader(
+        dataset_name="test",
+        return_X_y=False,
+        downloads_path=None,
+    ):
+        pass
+
+    decorated_loader = cache_dataset(example_loader)
+
+    signature = inspect.signature(decorated_loader)
+
+    assert "dataset_name" in signature.parameters
+    assert "return_X_y" in signature.parameters
+    assert "downloads_path" in signature.parameters
+
+    assert signature.parameters["dataset_name"].default == "test"
+    assert signature.parameters["return_X_y"].default is False
+    assert signature.parameters["downloads_path"].default is None
+
+
+def test_cache_dataset_exposes_expected_signature():
+    def example_loader(
+        dataset_name="test",
+        return_X_y=False,
+        downloads_path=None,
+    ):
+        pass
+
+    decorated_loader = cache_dataset(example_loader)
+
+    signature = inspect.signature(decorated_loader)
+    parameters = list(signature.parameters.values())
+
+    assert parameters == [
+        inspect.Parameter(
+            "dataset_name",
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            default="test",
+        ),
+        inspect.Parameter(
+            "return_X_y",
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            default=False,
+        ),
+        inspect.Parameter(
+            "downloads_path",
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            default=None,
+        ),
+    ]
+
+
+def test_cache_dataset_preserves_different_loader_signatures():
+    def example_loader(
+        subset="train",
+        ignore_small_clusters=False,
+        image_size=(200, 200),
+        frame_sampling_ratio=0.5,
+        return_X_y=False,
+        downloads_path=None,
+        use_cache=True,
+    ):
+        pass
+
+    original_signature = inspect.signature(example_loader)
+    decorated_loader = cache_dataset(example_loader)
+    decorated_signature = inspect.signature(decorated_loader)
+
+    # All original parameters must be preserved exactly
+    for parameter_name, parameter in original_signature.parameters.items():
+        assert parameter_name in decorated_signature.parameters
+        assert decorated_signature.parameters[parameter_name] == parameter
+
+    # Check the individual parameter types/defaults
+    assert decorated_signature.parameters["subset"].default == "train"
+    assert decorated_signature.parameters["ignore_small_clusters"].default is False
+    assert decorated_signature.parameters["image_size"].default == (200, 200)
+    assert decorated_signature.parameters["frame_sampling_ratio"].default == 0.5
+    assert decorated_signature.parameters["return_X_y"].default is False
+    assert decorated_signature.parameters["downloads_path"].default is None
+    assert decorated_signature.parameters["use_cache"].default is True
+
+
+def test_cache_dataset_preserves_complex_loader_signature():
+    def example_loader(
+        subset="all",
+        ignore_small_clusters=True,
+        image_size=(200, 200),
+        frame_sampling_ratio=0.5,
+        return_X_y=False,
+        downloads_path=None,
+    ):
+        pass
+
+    original_signature = inspect.signature(example_loader)
+    decorated_loader = cache_dataset(example_loader)
+    decorated_signature = inspect.signature(decorated_loader)
+
+    # The original signature must be preserved
+    assert list(decorated_signature.parameters) == [
+        "subset",
+        "ignore_small_clusters",
+        "image_size",
+        "frame_sampling_ratio",
+        "return_X_y",
+        "downloads_path",
+    ]
+
+    for parameter_name, parameter in original_signature.parameters.items():
+        assert decorated_signature.parameters[parameter_name] == parameter
+
+    # Verify different kinds of defaults
+    assert decorated_signature.parameters["subset"].default == "all"
+    assert decorated_signature.parameters["ignore_small_clusters"].default is True
+    assert decorated_signature.parameters["image_size"].default == (200, 200)
+    assert decorated_signature.parameters["frame_sampling_ratio"].default == 0.5
+
+
+def test_cache_dataset_preserves_wrapped_function():
+    def example_loader(dataset_name="test"):
+        """Example loader documentation."""
+        pass
+
+    decorated_loader = cache_dataset(example_loader)
+
+    assert decorated_loader.__wrapped__ is example_loader
+    assert decorated_loader.__name__ == example_loader.__name__
+    assert decorated_loader.__module__ == example_loader.__module__
+    assert decorated_loader.__doc__ == example_loader.__doc__
+
+
+def test_cache_dataset_preserves_getfullargspec():
+    def example_loader(
+        subset="train",
+        ignore_small_clusters=False,
+        image_size=(200, 200),
+        frame_sampling_ratio=0.5,
+        return_X_y=False,
+        downloads_path=None,
+    ):
+        pass
+
+    original_args = inspect.getfullargspec(example_loader).args
+    decorated_loader = cache_dataset(example_loader)
+    decorated_args = inspect.getfullargspec(decorated_loader).args
+
+    # The positional/original arguments must remain unchanged.
+    assert decorated_args == original_args
+
+
+@pytest.mark.parametrize(
+    "loader_name",
+    [
+        "load_soybean_large",
+    ],
+)
+def test_cache_dataset_preserves_real_loader_getfullargspec(
+    loader_name,
+):
+    import clustpy.data as data
+
+    loader = getattr(data, loader_name)
+    original_signature = inspect.getfullargspec(loader)
+
+    decorated_loader = cache_dataset(loader)
+    decorated_signature = inspect.getfullargspec(decorated_loader)
+
+    # Positional arguments are preserved
+    assert decorated_signature.args == original_signature.args
+
+    # *args is preserved
+    assert decorated_signature.varargs == original_signature.varargs
+
+    # **kwargs is preserved
+    assert decorated_signature.varkw == original_signature.varkw
+
+    # Keyword-only arguments are preserved
+    assert decorated_signature.kwonlyargs == original_signature.kwonlyargs
+
+    # Keyword-only defaults are preserved
+    assert decorated_signature.kwonlydefaults == original_signature.kwonlydefaults
 
 
 # ============================================================================

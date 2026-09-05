@@ -111,7 +111,7 @@ def cache_dataset(func):
         # Check for `use_cache` in the call
         # if not existent there -> check in the func's arguments
         # if also not existent there -> use `USE_CACHE_DEFAULT`
-        use_cache = kwargs.pop("use_cache", None)
+        use_cache = kwargs.get("use_cache")
         if use_cache == None:
             use_cache = bound.arguments.get("use_cache")
         if use_cache == None:
@@ -209,8 +209,13 @@ def cache_dataset(func):
         if return_X_y:
             return bunch.data, bunch.target
 
+        bunch.cached = True
+        bunch.cache_path = cache_file
+        bunch.cache_metadata_path = metadata_file
         return bunch
 
+    # Copy functions signature to wrapper
+    wrapper.__signature__ = signature
     return wrapper
 
 
